@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "feat",
   "description": "Final polish - Settings page, responsive design fixes, loading states, error boundaries, and comprehensive test coverage. Ensures the app is production-ready with proper UX.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/app/settings/page.tsx - Settings page with sections: Profile (name, email from Google, avatar), Notifications (email alerts toggle for: trade copied, daily report, risk limit hit), API Connections (list connected platforms with status, reconnect button), Preferences (default risk multiplier, preferred timezone, dark mode toggle)",
     "Create src/components/shared/loading-skeleton.tsx - Reusable skeleton loading components matching each card/table layout in the app",
@@ -34,5 +34,5 @@
     "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build succeeds cleanly. All 115 tests pass. Lint passes with only pre-existing warnings from prior features (unused vars). The Dialog component already supports mobile full-screen via sm:rounded-lg pattern. Tables already had overflow-x-auto. Created AppShell shared layout component to DRY up the sidebar+header wrapping for all protected routes. The metrics API route logs an error during static generation (pre-existing from FEAT-004) but does not block the build."
 }
