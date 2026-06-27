@@ -2,7 +2,7 @@
 
 import { AppShell } from "@/components/shared/app-shell";
 
-export default function DashboardLayout({
+export default function GroupsLayout({
   children,
 }: {
   children: React.ReactNode;

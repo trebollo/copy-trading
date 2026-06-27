@@ -2,7 +2,7 @@
 
 import { AppShell } from "@/components/shared/app-shell";
 
-export default function DashboardLayout({
+export default function MetricsLayout({
   children,
 }: {
   children: React.ReactNode;

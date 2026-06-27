@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "feat",
   "description": "Final polish - Settings page, responsive design fixes, loading states, error boundaries, and comprehensive test coverage. Ensures the app is production-ready with proper UX.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/app/settings/page.tsx - Settings page with sections: Profile (name, email from Google, avatar), Notifications (email alerts toggle for: trade copied, daily report, risk limit hit), API Connections (list connected platforms with status, reconnect button), Preferences (default risk multiplier, preferred timezone, dark mode toggle)",
     "Create src/components/shared/loading-skeleton.tsx - Reusable skeleton loading components matching each card/table layout in the app",

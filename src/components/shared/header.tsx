@@ -19,26 +19,39 @@ export function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-      <div className="flex items-center gap-4">
+    <header
+      className="flex h-14 md:h-16 items-center justify-between border-b bg-card px-4 md:px-6"
+      role="banner"
+    >
+      <div className="hidden sm:flex items-center gap-4">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
             placeholder="Search..."
-            className="w-64 pl-8"
+            className="w-48 md:w-64 pl-8"
+            aria-label="Search"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
+      <div className="flex items-center gap-2 md:gap-4 ml-auto">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          aria-label="Notifications"
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
+          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" aria-label="New notifications" />
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Button
+              variant="ghost"
+              className="relative h-8 w-8 rounded-full"
+              aria-label="User menu"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarImage
                   src={session?.user?.image ?? ""}
@@ -63,7 +76,7 @@ export function Header() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut()}>
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
               <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

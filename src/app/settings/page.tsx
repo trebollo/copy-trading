@@ -1,0 +1,284 @@
+"use client";
+
+import React, { useState } from "react";
+import { useSession } from "next-auth/react";
+import {
+  User,
+  Bell,
+  Link2,
+  SlidersHorizontal,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface NotificationSettings {
+  tradeCopied: boolean;
+  dailyReport: boolean;
+  riskLimitHit: boolean;
+}
+
+interface Preferences {
+  defaultRiskMultiplier: string;
+  timezone: string;
+  darkMode: boolean;
+}
+
+interface PlatformConnection {
+  id: string;
+  name: string;
+  status: "connected" | "disconnected";
+  lastSync?: string;
+}
+
+const defaultPlatforms: PlatformConnection[] = [
+  {
+    id: "tradovate",
+    name: "Tradovate",
+    status: "connected",
+    lastSync: "2 minutes ago",
+  },
+  {
+    id: "ninjatrader",
+    name: "NinjaTrader",
+    status: "disconnected",
+  },
+  {
+    id: "rithmic",
+    name: "Rithmic",
+    status: "disconnected",
+  },
+];
+
+export default function SettingsPage() {
+  const { data: session } = useSession();
+
+  const [notifications, setNotifications] = useState<NotificationSettings>({
+    tradeCopied: true,
+    dailyReport: true,
+    riskLimitHit: true,
+  });
+
+  const [preferences, setPreferences] = useState<Preferences>({
+    defaultRiskMultiplier: "1.0",
+    timezone: "America/New_York",
+    darkMode: false,
+  });
+
+  const [platforms] = useState<PlatformConnection[]>(defaultPlatforms);
+
+  const handleNotificationChange = (key: keyof NotificationSettings) => {
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handlePreferenceChange = (key: keyof Preferences, value: string | boolean) => {
+    setPreferences((prev) => ({ ...prev, [key]: value }));
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+        <p className="text-muted-foreground">
+          Manage your account preferences and platform connections.
+        </p>
+      </div>
+
+      {/* Profile Section */}
+      <section aria-labelledby="profile-heading" className="rounded-lg border bg-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <User className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <h3 id="profile-heading" className="text-lg font-semibold">Profile</h3>
+        </div>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+          <Avatar className="h-16 w-16">
+            <AvatarImage
+              src={session?.user?.image ?? ""}
+              alt={session?.user?.name ?? "User avatar"}
+            />
+            <AvatarFallback className="text-lg">
+              {session?.user?.name?.charAt(0) ?? "U"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <p className="text-lg font-medium">
+              {session?.user?.name ?? "User"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {session?.user?.email ?? "email@example.com"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Signed in with Google
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Notifications Section */}
+      <section aria-labelledby="notifications-heading" className="rounded-lg border bg-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Bell className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <h3 id="notifications-heading" className="text-lg font-semibold">Notifications</h3>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Trade Copied</p>
+              <p className="text-sm text-muted-foreground">
+                Get notified when a trade is successfully copied
+              </p>
+            </div>
+            <Switch
+              checked={notifications.tradeCopied}
+              onCheckedChange={() => handleNotificationChange("tradeCopied")}
+              aria-label="Toggle trade copied notifications"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Daily Report</p>
+              <p className="text-sm text-muted-foreground">
+                Receive a daily summary of your trading activity
+              </p>
+            </div>
+            <Switch
+              checked={notifications.dailyReport}
+              onCheckedChange={() => handleNotificationChange("dailyReport")}
+              aria-label="Toggle daily report notifications"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Risk Limit Hit</p>
+              <p className="text-sm text-muted-foreground">
+                Alert when an account reaches its risk limit
+              </p>
+            </div>
+            <Switch
+              checked={notifications.riskLimitHit}
+              onCheckedChange={() => handleNotificationChange("riskLimitHit")}
+              aria-label="Toggle risk limit hit notifications"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* API Connections Section */}
+      <section aria-labelledby="connections-heading" className="rounded-lg border bg-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Link2 className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <h3 id="connections-heading" className="text-lg font-semibold">API Connections</h3>
+        </div>
+        <div className="space-y-4">
+          {platforms.map((platform) => (
+            <div
+              key={platform.id}
+              className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="flex items-center gap-3">
+                {platform.status === "connected" ? (
+                  <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                )}
+                <div>
+                  <p className="font-medium">{platform.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {platform.status === "connected"
+                      ? `Last sync: ${platform.lastSync}`
+                      : "Not connected"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={platform.status === "connected" ? "outline" : "default"}
+                size="sm"
+                aria-label={
+                  platform.status === "connected"
+                    ? `Reconnect ${platform.name}`
+                    : `Connect ${platform.name}`
+                }
+              >
+                <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+                {platform.status === "connected" ? "Reconnect" : "Connect"}
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Preferences Section */}
+      <section aria-labelledby="preferences-heading" className="rounded-lg border bg-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <SlidersHorizontal className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <h3 id="preferences-heading" className="text-lg font-semibold">Preferences</h3>
+        </div>
+        <div className="space-y-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium">Default Risk Multiplier</p>
+              <p className="text-sm text-muted-foreground">
+                Applied to new accounts added to copy groups
+              </p>
+            </div>
+            <Input
+              type="number"
+              step="0.1"
+              min="0.1"
+              max="10"
+              value={preferences.defaultRiskMultiplier}
+              onChange={(e) =>
+                handlePreferenceChange("defaultRiskMultiplier", e.target.value)
+              }
+              className="w-24"
+              aria-label="Default risk multiplier"
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium">Preferred Timezone</p>
+              <p className="text-sm text-muted-foreground">
+                Used for displaying trade times and daily reports
+              </p>
+            </div>
+            <select
+              value={preferences.timezone}
+              onChange={(e) =>
+                handlePreferenceChange("timezone", e.target.value)
+              }
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              aria-label="Preferred timezone"
+            >
+              <option value="America/New_York">Eastern (ET)</option>
+              <option value="America/Chicago">Central (CT)</option>
+              <option value="America/Denver">Mountain (MT)</option>
+              <option value="America/Los_Angeles">Pacific (PT)</option>
+              <option value="Europe/London">London (GMT)</option>
+              <option value="Europe/Paris">Central Europe (CET)</option>
+              <option value="Asia/Tokyo">Tokyo (JST)</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Dark Mode</p>
+              <p className="text-sm text-muted-foreground">
+                Toggle dark color scheme
+              </p>
+            </div>
+            <Switch
+              checked={preferences.darkMode}
+              onCheckedChange={(checked) =>
+                handlePreferenceChange("darkMode", checked)
+              }
+              aria-label="Toggle dark mode"
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
