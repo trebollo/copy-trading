@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Metrics and Analytics - Per-account and aggregated metrics dashboard with charts, KPIs, and performance analysis. Includes API endpoints for metrics data and a rich visual dashboard.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/app/api/metrics/route.ts - GET handler returning aggregated metrics across all user's accounts: total PnL, total trades, overall win rate, best/worst day, equity curve data. Accept query params for date range.",
     "Create src/app/api/metrics/[accountId]/route.ts - GET handler returning per-account metrics: daily PnL array, cumulative PnL, trade count by day, win rate over time, average win/loss, max drawdown, profit factor. Accept date range params.",
