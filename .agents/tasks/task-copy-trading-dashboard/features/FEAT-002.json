@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Trading Accounts Management - Full CRUD API routes and UI pages for managing trading accounts from different funding companies (Tradovate, etc). Includes the trading platform adapter pattern for multi-platform support.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/lib/trading/types.ts - Define TypeScript interfaces: TradingPlatform (enum: TRADOVATE, NINJATRADER, RITHMIC), PlatformAdapter interface (connect, disconnect, getPositions, getOrders, placeTrade, cancelOrder, getAccountInfo, subscribeTrades), TradeSignal, Position, Order, AccountInfo",
     "Create src/lib/trading/tradovate.ts - Tradovate adapter implementing PlatformAdapter interface. Include methods for OAuth token management, REST API calls to Tradovate endpoints (authentication, account info, positions, orders, trade execution). Use fetch API. Handle token refresh. Export class TradovateAdapter.",
