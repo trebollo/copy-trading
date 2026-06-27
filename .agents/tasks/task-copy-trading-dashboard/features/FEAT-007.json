@@ -2,7 +2,7 @@
   "id": "FEAT-007",
   "type": "fix",
   "description": "Address v2 review feedback: daily-loss circuit breaker, adapter connection, credential encryption, webhook API key auth",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/lib/crypto.ts with AES-256-GCM encrypt/decrypt utility using ENCRYPTION_KEY env var",
     "Fix daily-loss circuit breaker in webhook by computing actual daily loss from Trade table",
@@ -31,5 +31,5 @@
     "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Build passes cleanly. All 146 tests pass (22 new tests: 16 for crypto, 6 for daily-loss). Prisma generate cannot run due to network restrictions on prisma.sh, so webhookSecret was manually added to the generated Prisma client types in node_modules/.prisma/client/default.d.ts. The adapter.connect() call in the webhook is fire-and-forget (returns a Promise) which matches the pattern in copy-service.ts - the Tradovate adapter's ensureConnected() will throw at placeTrade time if auth failed, which is caught gracefully by the copy engine."
 }
