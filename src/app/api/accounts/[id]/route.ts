@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateTradingAccountSchema } from "@/lib/validations/trading-account";
 import { redactAccountCredentials } from "@/lib/utils";
+import { encrypt } from "@/lib/crypto";
 
 export async function GET(
   _request: NextRequest,
@@ -86,8 +87,8 @@ export async function PUT(
     if (name !== undefined) data.name = name;
     if (platform !== undefined) data.platform = platform;
     if (accountId !== undefined) data.accountId = accountId;
-    if (apiKey !== undefined) data.apiKey = apiKey || null;
-    if (apiSecret !== undefined) data.apiSecret = apiSecret || null;
+    if (apiKey !== undefined) data.apiKey = encrypt(apiKey || null);
+    if (apiSecret !== undefined) data.apiSecret = encrypt(apiSecret || null);
     if (status !== undefined) data.status = status;
 
     const account = await prisma.tradingAccount.update({

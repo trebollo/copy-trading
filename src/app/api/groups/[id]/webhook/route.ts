@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { copyEngine } from "@/lib/trading/copy-engine";
 import { createPlatformAdapter } from "@/lib/trading/adapter-factory";
 import { TradingPlatform, type TradeSignal } from "@/lib/trading/types";
+import { getDailyLossForAccounts } from "@/lib/trading/daily-loss";
+import { decrypt } from "@/lib/crypto";
 import { z } from "zod";
 
 const tradeSignalSchema = z.object({
@@ -23,19 +25,41 @@ const tradeSignalSchema = z.object({
  *
  * Accepts a trade signal from the master account and runs it through
  * the copy engine to copy the trade to all active followers in the group.
+ *
+ * Authentication: Either a valid NextAuth session (browser) or an
+ * x-api-key header matching the group's webhookSecret (external callers).
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { id } = await params;
 
-    if (!session?.user?.id) {
+    // Try session auth first, fall back to API key auth
+    const session = await getServerSession(authOptions);
+    const apiKey = request.headers.get("x-api-key");
+
+    let authenticatedUserId: string | null = null;
+
+    if (session?.user?.id) {
+      authenticatedUserId = session.user.id;
+    } else if (apiKey) {
+      // Validate API key against the group's webhookSecret
+      const group = await prisma.copyGroup.findFirst({
+        where: { id, webhookSecret: apiKey },
+        select: { userId: true },
+      });
+
+      if (group) {
+        authenticatedUserId = group.userId;
+      }
+    }
+
+    if (!authenticatedUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
     const body = await request.json();
     const validation = tradeSignalSchema.safeParse(body);
 
@@ -48,7 +72,7 @@ export async function POST(
 
     // Verify group ownership and fetch members
     const group = await prisma.copyGroup.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, userId: authenticatedUserId },
       include: {
         members: {
           include: {
@@ -72,10 +96,11 @@ export async function POST(
 
     const signal: TradeSignal = validation.data;
 
-    // Build the copy group config for the engine
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Compute actual daily loss for each member account
+    const memberAccountIds = group.members.map((m: { tradingAccountId: string }) => m.tradingAccountId);
+    const dailyLossMap = await getDailyLossForAccounts(memberAccountIds);
 
+    // Build the copy group config for the engine
     const groupConfig = {
       id: group.id,
       name: group.name,
@@ -87,7 +112,7 @@ export async function POST(
         maxLots: member.maxLots ?? 100,
         maxDailyLoss: member.maxDailyLoss ?? 100000,
         isActive: member.isActive,
-        dailyLossUsed: 0, // Could be computed from daily metrics
+        dailyLossUsed: dailyLossMap.get(member.tradingAccountId) ?? 0,
       })),
     };
 
@@ -102,8 +127,15 @@ export async function POST(
       const account = memberEntry.tradingAccount;
       const platform = account.platform as TradingPlatform;
       const adapter = createPlatformAdapter(platform);
-      // Note: In production, adapters would be pre-connected.
-      // For webhook-based triggering, connection happens inline.
+
+      // Connect the adapter with decrypted credentials before use
+      const credentials = {
+        apiKey: decrypt(account.apiKey) || undefined,
+        apiSecret: decrypt(account.apiSecret) || undefined,
+        accountId: account.accountId,
+      };
+      adapter.connect(credentials);
+
       return adapter;
     };
 

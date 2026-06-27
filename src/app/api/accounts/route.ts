@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createTradingAccountSchema } from "@/lib/validations/trading-account";
 import { redactAccountCredentials } from "@/lib/utils";
+import { encrypt } from "@/lib/crypto";
 
 export async function GET(request: NextRequest) {
   try {
@@ -77,8 +78,8 @@ export async function POST(request: NextRequest) {
         name,
         platform,
         accountId,
-        apiKey: apiKey || null,
-        apiSecret: apiSecret || null,
+        apiKey: encrypt(apiKey || null),
+        apiSecret: encrypt(apiSecret || null),
       },
     });
 

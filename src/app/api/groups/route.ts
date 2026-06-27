@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { randomBytes } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createCopyGroupSchema } from "@/lib/validations/copy-group";
@@ -77,12 +78,16 @@ export async function POST(request: NextRequest) {
 
     const { name, description, masterAccountId, members } = validation.data;
 
+    // Generate a unique webhook secret for external callers
+    const webhookSecret = randomBytes(32).toString("hex");
+
     const group = await prisma.copyGroup.create({
       data: {
         userId: session.user.id,
         name,
         description: description || null,
         masterAccountId,
+        webhookSecret,
         isActive: true,
         members: {
           create: members.map((member) => ({

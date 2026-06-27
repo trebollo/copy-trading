@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-007",
+  "type": "fix",
+  "description": "Address v2 review feedback: daily-loss circuit breaker, adapter connection, credential encryption, webhook API key auth",
+  "status": "in_progress",
+  "steps": [
+    "Create src/lib/crypto.ts with AES-256-GCM encrypt/decrypt utility using ENCRYPTION_KEY env var",
+    "Fix daily-loss circuit breaker in webhook by computing actual daily loss from Trade table",
+    "Fix follower adapter connection in webhook by calling connect() with credentials before returning",
+    "Add webhookSecret field to CopyGroup in Prisma schema and auto-generate on group creation",
+    "Add API key fallback auth to the webhook route - accept x-api-key header matching group webhookSecret",
+    "Update account creation/update routes to encrypt credentials on save",
+    "Update sync and webhook routes to decrypt credentials before use",
+    "Add ENCRYPTION_KEY to .env.example",
+    "Write tests for crypto utility, daily loss calculation, and webhook auth"
+  ],
+  "acceptance_criteria": [
+    "Daily loss circuit breaker computes actual loss from Trade table for today",
+    "Follower adapters are connected with credentials before placeTrade is called",
+    "src/lib/crypto.ts provides encrypt/decrypt functions using AES-256-GCM",
+    "Account credentials are encrypted before storage",
+    "Credentials are decrypted before use in sync and webhook routes",
+    "Webhook accepts x-api-key header as alternative to session auth",
+    "CopyGroup model has nullable webhookSecret field",
+    "Group creation auto-generates webhookSecret",
+    "pnpm build passes",
+    "pnpm test passes"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm build",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

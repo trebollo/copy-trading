@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createPlatformAdapter } from "@/lib/trading/adapter-factory";
 import { TradingPlatform } from "@/lib/trading/types";
 import { redactAccountCredentials } from "@/lib/utils";
+import { decrypt } from "@/lib/crypto";
 
 export async function POST(
   _request: NextRequest,
@@ -43,8 +44,8 @@ export async function POST(
     }
 
     await adapter.connect({
-      apiKey: account.apiKey || undefined,
-      apiSecret: account.apiSecret || undefined,
+      apiKey: decrypt(account.apiKey) || undefined,
+      apiSecret: decrypt(account.apiSecret) || undefined,
       accountId: account.accountId,
     });
 
