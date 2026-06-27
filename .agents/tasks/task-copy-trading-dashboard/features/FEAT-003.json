@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Copy Groups Management - Full CRUD for copy trading groups where users define a master account and follower accounts with configurable risk parameters. Includes the copy engine logic that replicates trades from master to followers.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/lib/validations/copy-group.ts - Zod schemas for creating/updating groups (name, description, masterAccountId, members with riskMultiplier, maxLots, maxDailyLoss, isActive)",
     "Create src/lib/trading/copy-engine.ts - CopyEngine class that: receives a trade signal from master account, iterates over active group members, calculates adjusted quantity based on riskMultiplier and maxLots, checks maxDailyLoss limit, places trades via platform adapter for each follower. Include methods: processTradeSignal, calculateAdjustedQuantity, checkRiskLimits, executeCopyTrade. Export as singleton.",
