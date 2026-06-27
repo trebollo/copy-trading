@@ -11,13 +11,13 @@ describe("createPlatformAdapter", () => {
 
   it("throws error for NINJATRADER platform (not yet implemented)", () => {
     expect(() => createPlatformAdapter(TradingPlatform.NINJATRADER)).toThrow(
-      "NinjaTrader adapter is not yet implemented"
+      "NinjaTrader integration is coming soon"
     );
   });
 
   it("throws error for RITHMIC platform (not yet implemented)", () => {
     expect(() => createPlatformAdapter(TradingPlatform.RITHMIC)).toThrow(
-      "Rithmic adapter is not yet implemented"
+      "Rithmic integration is coming soon"
     );
   });
 

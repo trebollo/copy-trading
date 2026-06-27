@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-006",
+  "type": "fix",
+  "description": "Address v1 review feedback: credential redaction, copy engine runtime trigger, group member field name fix, settings persistence, platform UI gating",
+  "status": "in_progress",
+  "steps": [
+    "Create a credential redaction helper at src/lib/utils.ts and strip apiKey/apiSecret from GET account responses",
+    "Create POST /api/groups/[id]/webhook route to trigger trade copying through the copy engine",
+    "Create src/lib/trading/copy-service.ts wiring subscribeTrades to the copy engine",
+    "Fix accountId -> tradingAccountId in POST /api/groups and POST /api/groups/:id/members",
+    "Add UserPreferences model to Prisma schema and create GET/PUT /api/settings route",
+    "Wire settings page to save/load via API",
+    "Add Coming Soon badge on NinjaTrader/Rithmic in the create-account-dialog and handle gracefully in sync route",
+    "Update adapter-factory to return a clear error with platform name"
+  ],
+  "acceptance_criteria": [
+    "GET /api/accounts and GET /api/accounts/[id] do not return apiKey or apiSecret values",
+    "POST /api/groups/[id]/webhook accepts a trade signal and runs it through the copy engine",
+    "copy-service.ts provides a subscribeMasterAccount function connecting adapter to engine",
+    "Group creation uses tradingAccountId field correctly",
+    "Settings page persists and loads preferences from /api/settings",
+    "NinjaTrader and Rithmic show Coming Soon badge and are disabled in the create account dialog",
+    "pnpm build passes",
+    "pnpm test passes"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm build",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

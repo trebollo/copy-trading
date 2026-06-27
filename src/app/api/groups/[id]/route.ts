@@ -22,7 +22,7 @@ export async function GET(
       include: {
         members: {
           include: {
-            account: {
+            tradingAccount: {
               select: { id: true, name: true, platform: true, status: true },
             },
           },

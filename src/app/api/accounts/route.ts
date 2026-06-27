@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createTradingAccountSchema } from "@/lib/validations/trading-account";
+import { redactAccountCredentials } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      accounts,
+      accounts: accounts.map(redactAccountCredentials),
       pagination: {
         page,
         limit,
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ account }, { status: 201 });
+    return NextResponse.json({ account: redactAccountCredentials(account) }, { status: 201 });
   } catch (error) {
     console.error("Error creating account:", error);
     return NextResponse.json(

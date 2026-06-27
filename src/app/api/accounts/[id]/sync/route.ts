@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createPlatformAdapter } from "@/lib/trading/adapter-factory";
 import { TradingPlatform } from "@/lib/trading/types";
+import { redactAccountCredentials } from "@/lib/utils";
 
 export async function POST(
   _request: NextRequest,
@@ -28,7 +29,18 @@ export async function POST(
     }
 
     const platform = account.platform as TradingPlatform;
-    const adapter = createPlatformAdapter(platform);
+
+    let adapter;
+    try {
+      adapter = createPlatformAdapter(platform);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unsupported platform";
+      return NextResponse.json(
+        { error: message },
+        { status: 400 }
+      );
+    }
 
     await adapter.connect({
       apiKey: account.apiKey || undefined,
@@ -49,7 +61,7 @@ export async function POST(
     });
 
     return NextResponse.json({
-      account: updatedAccount,
+      account: redactAccountCredentials(updatedAccount),
       syncedAt: new Date().toISOString(),
     });
   } catch (error) {

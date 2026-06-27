@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateTradingAccountSchema } from "@/lib/validations/trading-account";
+import { redactAccountCredentials } from "@/lib/utils";
 
 export async function GET(
   _request: NextRequest,
@@ -36,7 +37,7 @@ export async function GET(
       return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ account });
+    return NextResponse.json({ account: redactAccountCredentials(account) });
   } catch (error) {
     console.error("Error fetching account:", error);
     return NextResponse.json(
@@ -94,7 +95,7 @@ export async function PUT(
       data,
     });
 
-    return NextResponse.json({ account });
+    return NextResponse.json({ account: redactAccountCredentials(account) });
   } catch (error) {
     console.error("Error updating account:", error);
     return NextResponse.json(

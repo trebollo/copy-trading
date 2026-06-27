@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         isActive: true,
         members: {
           create: members.map((member) => ({
-            accountId: member.accountId,
+            tradingAccountId: member.accountId,
             riskMultiplier: member.riskMultiplier,
             maxLots: member.maxLots,
             maxDailyLoss: member.maxDailyLoss,

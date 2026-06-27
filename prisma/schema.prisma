@@ -18,6 +18,7 @@ model User {
 
   tradingAccounts TradingAccount[]
   copyGroups      CopyGroup[]
+  preferences     UserPreferences?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -148,4 +149,17 @@ model DailyMetric {
 
   @@unique([tradingAccountId, date])
   @@index([tradingAccountId])
+}
+
+model UserPreferences {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  defaultRiskMultiplier Float   @default(1.0)
+  timezone              String  @default("America/New_York")
+  darkMode              Boolean @default(false)
+  notifyTradeCopied     Boolean @default(true)
+  notifyDailyReport     Boolean @default(true)
+  notifyRiskLimitHit    Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

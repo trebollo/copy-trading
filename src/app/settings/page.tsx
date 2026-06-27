@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   User,
@@ -10,6 +10,8 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
+  Save,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +72,68 @@ export default function SettingsPage() {
   });
 
   const [platforms] = useState<PlatformConnection[]>(defaultPlatforms);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const loadPreferences = useCallback(async () => {
+    try {
+      const response = await fetch("/api/settings");
+      if (response.ok) {
+        const data = await response.json();
+        const prefs = data.preferences;
+        setNotifications({
+          tradeCopied: prefs.notifyTradeCopied,
+          dailyReport: prefs.notifyDailyReport,
+          riskLimitHit: prefs.notifyRiskLimitHit,
+        });
+        setPreferences({
+          defaultRiskMultiplier: String(prefs.defaultRiskMultiplier),
+          timezone: prefs.timezone,
+          darkMode: prefs.darkMode,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load preferences:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPreferences();
+  }, [loadPreferences]);
+
+  const savePreferences = async () => {
+    setIsSaving(true);
+    setSaveMessage(null);
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          defaultRiskMultiplier: parseFloat(preferences.defaultRiskMultiplier) || 1.0,
+          timezone: preferences.timezone,
+          darkMode: preferences.darkMode,
+          notifyTradeCopied: notifications.tradeCopied,
+          notifyDailyReport: notifications.dailyReport,
+          notifyRiskLimitHit: notifications.riskLimitHit,
+        }),
+      });
+
+      if (response.ok) {
+        setSaveMessage("Settings saved successfully");
+        setTimeout(() => setSaveMessage(null), 3000);
+      } else {
+        setSaveMessage("Failed to save settings");
+      }
+    } catch (error) {
+      console.error("Failed to save preferences:", error);
+      setSaveMessage("Failed to save settings");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleNotificationChange = (key: keyof NotificationSettings) => {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -79,13 +143,36 @@ export default function SettingsPage() {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">
-          Manage your account preferences and platform connections.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+          <p className="text-muted-foreground">
+            Manage your account preferences and platform connections.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {saveMessage && (
+            <p className="text-sm text-muted-foreground">{saveMessage}</p>
+          )}
+          <Button onClick={savePreferences} disabled={isSaving}>
+            {isSaving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" aria-hidden="true" />
+            )}
+            {isSaving ? "Saving..." : "Save Settings"}
+          </Button>
+        </div>
       </div>
 
       {/* Profile Section */}

@@ -41,14 +41,14 @@ export async function POST(
     const member = await prisma.copyGroupMember.create({
       data: {
         groupId: id,
-        accountId,
+        tradingAccountId: accountId,
         riskMultiplier,
         maxLots,
         maxDailyLoss,
         isActive,
       },
       include: {
-        account: {
+        tradingAccount: {
           select: { id: true, name: true, platform: true },
         },
       },

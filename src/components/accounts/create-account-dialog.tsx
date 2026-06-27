@@ -28,6 +28,11 @@ interface CreateAccountDialogProps {
   onSubmit: (data: z.infer<typeof createTradingAccountSchema>) => void;
 }
 
+const UNSUPPORTED_PLATFORMS = new Set([
+  TradingPlatform.NINJATRADER,
+  TradingPlatform.RITHMIC,
+]);
+
 export function CreateAccountDialog({
   open,
   onOpenChange,
@@ -72,6 +77,14 @@ export function CreateAccountDialog({
         if (value) formattedErrors[key] = value;
       }
       setErrors(formattedErrors);
+      return;
+    }
+
+    // Block unsupported platforms
+    if (UNSUPPORTED_PLATFORMS.has(validation.data.platform)) {
+      setErrors({
+        platform: ["This platform is not yet supported. Coming soon!"],
+      });
       return;
     }
 
@@ -125,11 +138,23 @@ export function CreateAccountDialog({
                 <SelectItem value={TradingPlatform.TRADOVATE}>
                   Tradovate
                 </SelectItem>
-                <SelectItem value={TradingPlatform.NINJATRADER}>
+                <SelectItem
+                  value={TradingPlatform.NINJATRADER}
+                  disabled
+                >
                   NinjaTrader
+                  <span className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    Coming Soon
+                  </span>
                 </SelectItem>
-                <SelectItem value={TradingPlatform.RITHMIC}>
+                <SelectItem
+                  value={TradingPlatform.RITHMIC}
+                  disabled
+                >
                   Rithmic
+                  <span className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    Coming Soon
+                  </span>
                 </SelectItem>
               </SelectContent>
             </Select>
