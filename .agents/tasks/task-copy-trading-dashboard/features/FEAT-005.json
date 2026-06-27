@@ -1,0 +1,38 @@
+{
+  "id": "FEAT-005",
+  "type": "feat",
+  "description": "Final polish - Settings page, responsive design fixes, loading states, error boundaries, and comprehensive test coverage. Ensures the app is production-ready with proper UX.",
+  "status": "pending",
+  "steps": [
+    "Create src/app/settings/page.tsx - Settings page with sections: Profile (name, email from Google, avatar), Notifications (email alerts toggle for: trade copied, daily report, risk limit hit), API Connections (list connected platforms with status, reconnect button), Preferences (default risk multiplier, preferred timezone, dark mode toggle)",
+    "Create src/components/shared/loading-skeleton.tsx - Reusable skeleton loading components matching each card/table layout in the app",
+    "Create src/components/shared/error-boundary.tsx - Error boundary component with retry button and friendly error message",
+    "Create src/components/shared/empty-state.tsx - Empty state component with icon, message, and CTA button for when lists are empty",
+    "Create src/app/loading.tsx - Root loading UI with skeleton layout matching the dashboard",
+    "Create src/app/error.tsx - Root error boundary page",
+    "Create src/app/not-found.tsx - Custom 404 page with navigation back to dashboard",
+    "Add responsive design adjustments: ensure sidebar collapses to bottom navigation on mobile (breakpoint sm:), cards stack vertically on small screens, tables become scrollable horizontally, dialogs are full-screen on mobile",
+    "Create src/app/login/page.tsx - Dedicated login page with app branding, feature highlights, and Google sign-in button with proper styling",
+    "Add aria-labels, role attributes, and keyboard navigation support to all interactive components (dialogs, dropdowns, toggles)",
+    "Run final pnpm build and pnpm lint to confirm everything compiles and passes linting"
+  ],
+  "acceptance_criteria": [
+    "Settings page renders with all sections and controls",
+    "Loading skeletons appear during data fetching states",
+    "Error boundary catches and displays errors gracefully with retry option",
+    "Empty states guide users to create their first account/group",
+    "App is responsive - usable on mobile, tablet, and desktop viewports",
+    "Login page is visually appealing with clear CTA",
+    "All interactive elements have proper accessibility attributes",
+    "pnpm build succeeds without warnings",
+    "pnpm lint passes cleanly",
+    "pnpm test passes all tests"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm build",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm lint",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

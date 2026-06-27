@@ -1,0 +1,7 @@
+{
+  "task_id": "task-copy-trading-dashboard",
+  "task_description": "Build a fully functional copy trading dashboard for managing funding company accounts, creating copy groups with configurable risk, viewing metrics, and connecting with Tradovate and other platforms. Full-stack Next.js 14 app with serverless backend, Google auth, and modern responsive UI.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005"],
+  "blocked_reason": null
+}

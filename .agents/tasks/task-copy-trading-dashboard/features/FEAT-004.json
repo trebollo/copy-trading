@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Metrics and Analytics - Per-account and aggregated metrics dashboard with charts, KPIs, and performance analysis. Includes API endpoints for metrics data and a rich visual dashboard.",
+  "status": "pending",
+  "steps": [
+    "Create src/app/api/metrics/route.ts - GET handler returning aggregated metrics across all user's accounts: total PnL, total trades, overall win rate, best/worst day, equity curve data. Accept query params for date range.",
+    "Create src/app/api/metrics/[accountId]/route.ts - GET handler returning per-account metrics: daily PnL array, cumulative PnL, trade count by day, win rate over time, average win/loss, max drawdown, profit factor. Accept date range params.",
+    "Create src/lib/metrics/calculations.ts - Pure functions for metric calculations: calculateWinRate, calculateMaxDrawdown, calculateProfitFactor, calculateSharpeRatio, calculateAverageWin, calculateAverageLoss, calculateEquityCurve, aggregateMetrics. These work on arrays of Trade/DailyMetric objects.",
+    "Create src/app/metrics/page.tsx - Main metrics page with: date range picker at top, KPI cards row (total PnL, win rate, profit factor, max drawdown, total trades, best day), equity curve chart (area chart), PnL by day bar chart, account comparison table. Use tabs to switch between 'Overview' (aggregated) and 'By Account' views.",
+    "Create src/components/metrics/kpi-card.tsx - Small card component for a single KPI value with label, value (formatted), trend indicator (up/down arrow with color), and optional sparkline",
+    "Create src/components/metrics/equity-curve-chart.tsx - Area chart using recharts showing cumulative PnL over time with gradient fill, responsive to container width",
+    "Create src/components/metrics/daily-pnl-chart.tsx - Bar chart using recharts showing daily PnL with green bars for positive days and red for negative days",
+    "Create src/components/metrics/account-comparison-table.tsx - Table comparing all accounts side by side: account name, total PnL, win rate, trades count, max drawdown, status",
+    "Create src/components/metrics/date-range-picker.tsx - Component with preset buttons (Today, 7D, 30D, 90D, YTD, All) and custom date range inputs",
+    "Update src/app/dashboard/page.tsx - Replace placeholder with actual dashboard overview pulling real KPI data: today's PnL card, active accounts count, active groups count, recent trades mini-table (last 5 trades), and a small equity curve chart widget",
+    "Add unit tests in src/test/metrics/ - Test all pure calculation functions with known inputs and expected outputs (win rate, drawdown, profit factor, sharpe ratio)"
+  ],
+  "acceptance_criteria": [
+    "Metrics calculation functions return correct values for known test data",
+    "API endpoints return properly structured metrics data with date range filtering",
+    "Metrics page displays KPI cards with proper formatting (currency, percentages)",
+    "Equity curve chart renders with area fill and is responsive",
+    "Daily PnL chart shows green/red bars correctly",
+    "Account comparison table lists all accounts with sortable columns",
+    "Date range picker filters data across all charts",
+    "Dashboard overview page shows real summary widgets",
+    "pnpm build succeeds",
+    "Unit tests pass for all metric calculation functions"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm build",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

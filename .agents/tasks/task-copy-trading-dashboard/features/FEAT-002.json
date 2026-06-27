@@ -1,0 +1,40 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Trading Accounts Management - Full CRUD API routes and UI pages for managing trading accounts from different funding companies (Tradovate, etc). Includes the trading platform adapter pattern for multi-platform support.",
+  "status": "pending",
+  "steps": [
+    "Create src/lib/trading/types.ts - Define TypeScript interfaces: TradingPlatform (enum: TRADOVATE, NINJATRADER, RITHMIC), PlatformAdapter interface (connect, disconnect, getPositions, getOrders, placeTrade, cancelOrder, getAccountInfo, subscribeTrades), TradeSignal, Position, Order, AccountInfo",
+    "Create src/lib/trading/tradovate.ts - Tradovate adapter implementing PlatformAdapter interface. Include methods for OAuth token management, REST API calls to Tradovate endpoints (authentication, account info, positions, orders, trade execution). Use fetch API. Handle token refresh. Export class TradovateAdapter.",
+    "Create src/lib/trading/adapter-factory.ts - Factory function that returns the correct adapter instance based on platform type",
+    "Create src/lib/validations/trading-account.ts - Zod schemas for creating and updating trading accounts (createTradingAccountSchema, updateTradingAccountSchema)",
+    "Create src/app/api/accounts/route.ts - GET (list user's accounts with pagination and filters) and POST (create new account with validation) handlers. Include proper error handling, auth checks via getServerSession.",
+    "Create src/app/api/accounts/[id]/route.ts - GET (single account details), PUT (update account), DELETE (soft delete account) handlers",
+    "Create src/app/api/accounts/[id]/sync/route.ts - POST handler that uses the platform adapter to sync account balance and status from the trading platform",
+    "Create src/app/accounts/page.tsx - Accounts list page showing all trading accounts in a responsive grid of cards. Each card shows: account name, platform badge, balance, status indicator (active/inactive/error), last sync time. Include 'Add Account' button that opens a dialog.",
+    "Create src/components/accounts/account-card.tsx - Card component displaying a single trading account with status indicator, platform icon, balance, and action menu (edit, sync, delete)",
+    "Create src/components/accounts/create-account-dialog.tsx - Dialog form for creating a new trading account. Fields: name, platform (select), account ID, API key, API secret. Include form validation with zod and react-hook-form pattern using controlled inputs.",
+    "Create src/components/accounts/edit-account-dialog.tsx - Dialog form for editing an existing trading account, pre-populated with current values",
+    "Create src/app/accounts/[id]/page.tsx - Account detail page showing: account info header, recent trades table, PnL chart (using recharts), and quick actions (sync, edit settings, view in group)",
+    "Create src/components/accounts/trades-table.tsx - Responsive table component showing recent trades with columns: symbol, side (buy/sell with color coding), quantity, price, PnL, status, time",
+    "Create src/components/accounts/account-pnl-chart.tsx - Line chart component using recharts showing account PnL over time (daily data)",
+    "Add unit tests in src/test/accounts/ - Test the Zod validation schemas, test the adapter factory, test API route handlers with mocked Prisma client"
+  ],
+  "acceptance_criteria": [
+    "API routes for CRUD operations on trading accounts work with proper auth checks",
+    "Zod validation rejects invalid account data and returns meaningful errors",
+    "Tradovate adapter class is properly structured with all required interface methods",
+    "Adapter factory returns correct adapter for each platform type",
+    "Accounts page renders a grid of account cards",
+    "Create/Edit dialogs validate input before submission",
+    "Account detail page shows trades table and PnL chart",
+    "pnpm build succeeds with all new files",
+    "Unit tests pass for validation schemas and adapter factory"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm build",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

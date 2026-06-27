@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Copy Groups Management - Full CRUD for copy trading groups where users define a master account and follower accounts with configurable risk parameters. Includes the copy engine logic that replicates trades from master to followers.",
+  "status": "pending",
+  "steps": [
+    "Create src/lib/validations/copy-group.ts - Zod schemas for creating/updating groups (name, description, masterAccountId, members with riskMultiplier, maxLots, maxDailyLoss, isActive)",
+    "Create src/lib/trading/copy-engine.ts - CopyEngine class that: receives a trade signal from master account, iterates over active group members, calculates adjusted quantity based on riskMultiplier and maxLots, checks maxDailyLoss limit, places trades via platform adapter for each follower. Include methods: processTradeSignal, calculateAdjustedQuantity, checkRiskLimits, executeCopyTrade. Export as singleton.",
+    "Create src/app/api/groups/route.ts - GET (list user's groups with member counts) and POST (create group with master + members) handlers",
+    "Create src/app/api/groups/[id]/route.ts - GET (group details with members and recent activity), PUT (update group settings), DELETE (deactivate group)",
+    "Create src/app/api/groups/[id]/members/route.ts - POST (add member to group) and DELETE (remove member) handlers",
+    "Create src/app/api/groups/[id]/toggle/route.ts - POST handler to activate/deactivate the copy group",
+    "Create src/app/groups/page.tsx - Groups list page showing all copy groups in cards. Each card shows: group name, master account badge, number of followers, active status toggle, last activity time. Include 'Create Group' button.",
+    "Create src/components/groups/group-card.tsx - Card component for a copy group showing status, master label, follower count, and toggle switch",
+    "Create src/components/groups/create-group-dialog.tsx - Multi-step dialog for creating a group: Step 1 - name and description, Step 2 - select master account from user's accounts, Step 3 - add follower accounts with individual risk settings (riskMultiplier slider 0.1-3.0, maxLots input, maxDailyLoss input)",
+    "Create src/app/groups/[id]/page.tsx - Group detail page with: group info header with active toggle, master account card at top, list of follower accounts as cards with their risk settings displayed, recent copied trades activity feed, and edit functionality",
+    "Create src/components/groups/member-risk-settings.tsx - Component showing and allowing inline editing of a member's risk settings (multiplier, max lots, max daily loss) with immediate save",
+    "Create src/components/groups/copy-activity-feed.tsx - Real-time-style feed showing recent copy trade events (master traded -> followers copied) with timestamps and status indicators",
+    "Add unit tests in src/test/groups/ - Test copy engine calculateAdjustedQuantity and checkRiskLimits logic, test Zod validation schemas, test API handlers"
+  ],
+  "acceptance_criteria": [
+    "API routes for CRUD operations on copy groups work correctly",
+    "Copy engine correctly calculates adjusted quantities based on risk multiplier",
+    "Copy engine respects maxLots and maxDailyLoss limits",
+    "Group creation flow allows selecting master and adding followers with risk config",
+    "Group detail page shows all members with their individual risk settings",
+    "Toggle activates/deactivates the entire copy group",
+    "pnpm build succeeds",
+    "Unit tests pass for copy engine logic and validation schemas"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm build",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
