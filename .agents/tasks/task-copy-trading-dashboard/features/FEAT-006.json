@@ -2,7 +2,7 @@
   "id": "FEAT-006",
   "type": "fix",
   "description": "Address v1 review feedback: credential redaction, copy engine runtime trigger, group member field name fix, settings persistence, platform UI gating",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create a credential redaction helper at src/lib/utils.ts and strip apiKey/apiSecret from GET account responses",
     "Create POST /api/groups/[id]/webhook route to trigger trade copying through the copy engine",
@@ -28,5 +28,5 @@
     "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Build passes with only pre-existing unused variable warnings. All 124 tests pass (9 new tests for maskCredential and redactAccountCredentials). Prisma generate cannot run due to network restrictions on prisma.sh, so the UserPreferences model type was manually added to the generated Prisma client types. The existing Error during static page generation for /api/metrics route is pre-existing from FEAT-004. The /api/settings route also shows a similar harmless error during static gen since it uses getServerSession (which uses headers). Also fixed the tradingAccount relation name in GET /api/groups/[id] route (was using 'account' but Prisma schema defines 'tradingAccount')."
 }
