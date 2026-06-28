@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix dashboard showing empty state by detecting empty/zero API responses and falling back to static mock data. Also redesign the entire dashboard with modern animations using framer-motion: glassmorphism cards, animated number counters, staggered entrance animations, hover micro-interactions, gradient accents, and smooth chart transitions.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Install framer-motion: run `pnpm add framer-motion`",
     "Fix `src/components/dashboard/dashboard-overview.tsx`: After successful API fetch, check if data is effectively empty (totalTrades === 0, equityCurve empty, accountCount === 0). If so, use static mock data. Replace the `generateMockEquityCurve()` function with a hardcoded static array (no Math.random) to avoid hydration mismatches.",
@@ -27,5 +27,5 @@
     "Run `pnpm build` and confirm it completes successfully with exit code 0"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly. All 146 tests pass. framer-motion 12.42.0 installed. Had to use 'as const' for ease property in variants to satisfy framer-motion TypeScript types. Removed unused imports (useMotionValue, useTransform, animate) from kpi-card. NODE_OPTIONS='' prefix needed for pnpm commands in this sandbox."
 }
