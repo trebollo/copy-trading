@@ -22,8 +22,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           {children}
         </QueryClientProvider>
+        <Toaster richColors />
       </ThemeProvider>
-      <Toaster richColors />
     </SessionProvider>
   );
 }

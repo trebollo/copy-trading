@@ -57,19 +57,29 @@ export function LandingPage({ demoMode }: LandingPageProps) {
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <Button size="lg" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
-            Sign in with Google
-          </Button>
+          {!demoMode && (
+            <Button size="lg" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+              Sign in with Google
+            </Button>
+          )}
 
           {demoMode && (
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => signIn("demo", { callbackUrl: "/dashboard" })}
-            >
-              <Play className="mr-2 h-4 w-4" />
-              Enter Demo Mode
-            </Button>
+            <>
+              <Button size="lg" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+                Sign in with Google
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Google sign-in requires configuration of OAuth credentials.
+              </p>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => signIn("demo", { callbackUrl: "/dashboard" })}
+              >
+                <Play className="mr-2 h-4 w-4" />
+                Enter Demo Mode
+              </Button>
+            </>
           )}
         </div>
       </div>

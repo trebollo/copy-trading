@@ -155,10 +155,6 @@ export function TradesPageContent() {
     setCurrentPage(1);
   }
 
-  function handleFilterChange() {
-    setCurrentPage(1);
-  }
-
   const uniqueSymbols = Array.from(new Set(mockTrades.map((t) => t.symbol))).sort();
 
   return (
@@ -175,7 +171,7 @@ export function TradesPageContent() {
               value={symbolFilter}
               onValueChange={(v) => {
                 setSymbolFilter(v);
-                handleFilterChange();
+                setCurrentPage(1);
               }}
             >
               <SelectTrigger className="w-[120px]">
@@ -198,7 +194,7 @@ export function TradesPageContent() {
               value={sideFilter}
               onValueChange={(v) => {
                 setSideFilter(v);
-                handleFilterChange();
+                setCurrentPage(1);
               }}
             >
               <SelectTrigger className="w-[120px]">
@@ -218,7 +214,7 @@ export function TradesPageContent() {
               value={statusFilter}
               onValueChange={(v) => {
                 setStatusFilter(v);
-                handleFilterChange();
+                setCurrentPage(1);
               }}
             >
               <SelectTrigger className="w-[120px]">

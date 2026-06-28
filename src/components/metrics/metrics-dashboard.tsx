@@ -210,39 +210,39 @@ export function MetricsDashboard() {
           : point.equity - (m.equityCurve[i - 1]?.equity || 0),
     })) || [];
 
-  // Generate mock time-series data for profit factor and win rate
+  // Static deterministic time-series data for profit factor and win rate
   const profitFactorData = useMemo(() => {
-    const data: Array<{ date: string; profitFactor: number }> = [];
+    const values = [
+      1.82, 1.91, 1.85, 1.97, 2.03, 1.95, 2.08, 2.14, 2.01, 1.93,
+      2.05, 2.12, 2.18, 2.25, 2.10, 2.03, 2.15, 2.22, 2.30, 2.17,
+      2.08, 2.19, 2.27, 2.35, 2.21, 2.13, 2.24, 2.31, 2.38, 2.15,
+    ];
     const now = new Date();
-    let pf = 1.8;
-    for (let i = 29; i >= 0; i--) {
+    return values.map((profitFactor, idx) => {
       const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      pf += (Math.random() - 0.45) * 0.3;
-      pf = Math.max(1.0, Math.min(3.0, pf));
-      data.push({
+      date.setDate(date.getDate() - (29 - idx));
+      return {
         date: date.toISOString().split("T")[0],
-        profitFactor: Math.round(pf * 100) / 100,
-      });
-    }
-    return data;
+        profitFactor,
+      };
+    });
   }, []);
 
   const winRateData = useMemo(() => {
-    const data: Array<{ date: string; winRate: number }> = [];
+    const values = [
+      0.600, 0.615, 0.608, 0.622, 0.635, 0.628, 0.641, 0.650, 0.637, 0.625,
+      0.640, 0.652, 0.660, 0.672, 0.658, 0.645, 0.661, 0.670, 0.680, 0.668,
+      0.655, 0.667, 0.675, 0.685, 0.671, 0.660, 0.673, 0.682, 0.690, 0.665,
+    ];
     const now = new Date();
-    let wr = 0.6;
-    for (let i = 29; i >= 0; i--) {
+    return values.map((winRate, idx) => {
       const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      wr += (Math.random() - 0.45) * 0.05;
-      wr = Math.max(0.4, Math.min(0.8, wr));
-      data.push({
+      date.setDate(date.getDate() - (29 - idx));
+      return {
         date: date.toISOString().split("T")[0],
-        winRate: Math.round(wr * 1000) / 1000,
-      });
-    }
-    return data;
+        winRate,
+      };
+    });
   }, []);
 
   return (

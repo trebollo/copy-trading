@@ -112,16 +112,21 @@ export default function LoginPage() {
           </Button>
 
           {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
-            <Button
-              className="w-full"
-              size="lg"
-              variant="outline"
-              onClick={() => signIn("demo", { callbackUrl: "/dashboard" })}
-              aria-label="Enter demo mode"
-            >
-              <Play className="mr-2 h-4 w-4" aria-hidden="true" />
-              Enter Demo Mode
-            </Button>
+            <>
+              <p className="text-center text-sm text-muted-foreground">
+                Google sign-in requires OAuth credentials to be configured.
+              </p>
+              <Button
+                className="w-full"
+                size="lg"
+                variant="outline"
+                onClick={() => signIn("demo", { callbackUrl: "/dashboard" })}
+                aria-label="Enter demo mode"
+              >
+                <Play className="mr-2 h-4 w-4" aria-hidden="true" />
+                Enter Demo Mode
+              </Button>
+            </>
           )}
 
           <p className="text-center text-xs text-muted-foreground">
