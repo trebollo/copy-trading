@@ -1,7 +1,6 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { TrendingUp, BarChart3, Users, Shield, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +10,6 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ demoMode }: LandingPageProps) {
-  const router = useRouter();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted p-4">
@@ -67,7 +65,7 @@ export function LandingPage({ demoMode }: LandingPageProps) {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => router.push("/dashboard")}
+              onClick={() => signIn("demo", { callbackUrl: "/dashboard" })}
             >
               <Play className="mr-2 h-4 w-4" />
               Enter Demo Mode

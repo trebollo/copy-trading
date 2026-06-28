@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Crown, Settings, Plus, Check, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -149,7 +150,9 @@ export default function GroupDetailPage() {
   const [editDescription, setEditDescription] = useState(group.description || "");
 
   const handleToggleGroup = () => {
+    const wasActive = group.isActive;
     setGroup((prev) => ({ ...prev, isActive: !prev.isActive }));
+    toast.success(wasActive ? "Group deactivated" : "Group activated");
   };
 
   const handleSaveMember = (
@@ -159,10 +162,12 @@ export default function GroupDetailPage() {
     setMembers((prev) =>
       prev.map((m) => (m.id === memberId ? { ...m, ...data } : m))
     );
+    toast.success("Member settings saved");
   };
 
   const handleRemoveMember = (memberId: string) => {
     setMembers((prev) => prev.filter((m) => m.id !== memberId));
+    toast.success("Member removed");
   };
 
   const handleEditGroup = () => {
@@ -178,6 +183,7 @@ export default function GroupDetailPage() {
       description: editDescription.trim() || prev.description,
     }));
     setEditDialogOpen(false);
+    toast.success("Group updated");
   };
 
   const handleAddMember = (accountId: string, accountName: string, accountPlatform: string) => {
@@ -194,6 +200,7 @@ export default function GroupDetailPage() {
     };
     setMembers((prev) => [...prev, newMember]);
     setAddMemberDialogOpen(false);
+    toast.success("Member added");
   };
 
   const activeMembers = members.filter((m) => m.isActive).length;

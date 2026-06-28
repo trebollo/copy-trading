@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix demo mode login, dark mode, and add toast notification system. Three interconnected UX fixes that affect the global app shell.",
+  "status": "in_progress",
+  "steps": [
+    "1. Fix Demo Mode Login in src/app/landing.tsx: Change the 'Enter Demo Mode' button to call signIn('demo', { callbackUrl: '/dashboard' }) instead of router.push('/dashboard'). This properly authenticates with the demo credentials provider.",
+    "2. Fix the login page at src/app/login/page.tsx: Add a demo mode button that calls signIn('demo', { callbackUrl: '/dashboard' }). Check NEXT_PUBLIC_DEMO_MODE env var on client side.",
+    "3. Add next-themes package: Install next-themes via pnpm add next-themes.",
+    "4. Create ThemeProvider in src/components/shared/providers.tsx: Wrap children with ThemeProvider from next-themes with attribute='class', defaultTheme='system', enableSystem=true.",
+    "5. Update src/app/layout.tsx: Add suppressHydrationWarning to html tag (already there). No class needed since next-themes handles it.",
+    "6. Update src/app/settings/page.tsx dark mode toggle: Replace the local darkMode state/preference with useTheme() from next-themes. The Switch should call setTheme('dark') or setTheme('light'). Remove darkMode from the save API body since it's handled client-side by next-themes.",
+    "7. Install sonner: pnpm add sonner.",
+    "8. Add Toaster component from sonner to src/components/shared/providers.tsx (or layout.tsx): Import { Toaster } from 'sonner' and render <Toaster /> inside Providers.",
+    "9. Update src/app/settings/page.tsx to use toast(): Replace setSaveMessage with toast.success('Settings saved') or toast.error('Failed to save'). Import { toast } from 'sonner'.",
+    "10. Update src/app/groups/[id]/page.tsx to show toasts: Add toast notifications when toggling group active/inactive, saving member settings, removing members, adding members.",
+    "11. Add NEXT_PUBLIC_DEMO_MODE to usage where needed: In landing.tsx the server passes demoMode prop. In login page use process.env.NEXT_PUBLIC_DEMO_MODE === 'true'."
+  ],
+  "acceptance_criteria": [
+    "pnpm build succeeds without errors",
+    "The landing page Enter Demo Mode button calls signIn('demo') properly",
+    "ThemeProvider from next-themes wraps the app and dark mode class is applied to html",
+    "Settings page dark mode toggle uses useTheme() from next-themes",
+    "Sonner Toaster is rendered in the providers",
+    "Settings save shows toast feedback instead of inline message",
+    "Group page actions show toast notifications"
+  ],
+  "verification": [
+    "Run pnpm build and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

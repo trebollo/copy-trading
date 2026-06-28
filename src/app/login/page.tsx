@@ -9,6 +9,7 @@ import {
   Zap,
   Users,
   ArrowRight,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -109,6 +110,19 @@ export default function LoginPage() {
             Sign in with Google
             <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
           </Button>
+
+          {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+            <Button
+              className="w-full"
+              size="lg"
+              variant="outline"
+              onClick={() => signIn("demo", { callbackUrl: "/dashboard" })}
+              aria-label="Enter demo mode"
+            >
+              <Play className="mr-2 h-4 w-4" aria-hidden="true" />
+              Enter Demo Mode
+            </Button>
+          )}
 
           <p className="text-center text-xs text-muted-foreground">
             By signing in, you agree to our terms of service and privacy policy.

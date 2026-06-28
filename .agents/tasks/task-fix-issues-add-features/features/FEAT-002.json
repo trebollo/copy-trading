@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add a dedicated /trades page with full trades list, pagination, filtering, and sorting. Also enhance metrics with profit factor chart, win rate chart over time, and session-based breakdown (Asian, London, NY).",
+  "status": "pending",
+  "steps": [
+    "1. Create src/app/trades/layout.tsx wrapping with AppShell (follow pattern from src/app/metrics/layout.tsx).",
+    "2. Create src/app/trades/page.tsx as a server component with metadata, rendering a TradesPage client component.",
+    "3. Create src/components/trades/trades-page.tsx: A full trades page with mock data (50+ trades) that shows ALL trades in a table using the pattern from src/components/accounts/trades-table.tsx. Include: pagination (page size selector 10/25/50), column sorting (by date, symbol, PnL), and filtering (by symbol, side, status). Use local state for demo. Include date/time for each trade so session analysis is possible.",
+    "4. Add 'Trades' nav item to src/components/shared/sidebar.tsx: Add { href: '/trades', label: 'Trades', icon: ScrollText } between Groups and Metrics in the navItems array. Import ScrollText from lucide-react.",
+    "5. Create src/components/metrics/profit-factor-chart.tsx: A Recharts LineChart showing profit factor over time. Accept data as Array<{ date: string; profitFactor: number }>. Follow the pattern from equity-curve-chart.tsx.",
+    "6. Create src/components/metrics/win-rate-chart.tsx: A Recharts LineChart showing win rate percentage over time. Accept data as Array<{ date: string; winRate: number }>. Follow the pattern from equity-curve-chart.tsx.",
+    "7. Create src/components/metrics/session-metrics.tsx: A component showing metrics broken down by session. Sessions: Asian (00:00-08:00 UTC), London (08:00-13:00 UTC), New York (13:00-22:00 UTC). Show a card per session with: PnL, win rate, total trades, profit factor. Use mock data. Display as 3 cards in a grid.",
+    "8. Update src/components/metrics/metrics-dashboard.tsx: Add a new tab 'Sessions' showing SessionMetrics component. In the 'Overview' tab, add Profit Factor Chart and Win Rate Chart below the existing Equity Curve and Daily PnL charts (in a new grid row). Generate mock time-series data for profit factor and win rate.",
+    "9. Update the 'Recent Trades' section in src/components/dashboard/dashboard-overview.tsx: Add a 'View All' link pointing to /trades below or in the card header."
+  ],
+  "acceptance_criteria": [
+    "pnpm build succeeds without errors",
+    "/trades route renders a full trades table with pagination controls, filtering by symbol/side/status, and sortable columns",
+    "Sidebar shows 'Trades' navigation item between Groups and Metrics",
+    "Metrics page Overview tab shows Profit Factor over time and Win Rate over time charts",
+    "Metrics page has a 'Sessions' tab showing Asian, London, NY session breakdowns",
+    "Dashboard 'Recent Trades' card has a link to /trades"
+  ],
+  "verification": [
+    "Run pnpm build and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

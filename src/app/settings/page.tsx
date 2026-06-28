@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import {
   User,
   Bell,
@@ -27,7 +29,6 @@ interface NotificationSettings {
 interface Preferences {
   defaultRiskMultiplier: string;
   timezone: string;
-  darkMode: boolean;
 }
 
 interface PlatformConnection {
@@ -58,6 +59,7 @@ const defaultPlatforms: PlatformConnection[] = [
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { theme, setTheme } = useTheme();
 
   const [notifications, setNotifications] = useState<NotificationSettings>({
     tradeCopied: true,
@@ -68,13 +70,11 @@ export default function SettingsPage() {
   const [preferences, setPreferences] = useState<Preferences>({
     defaultRiskMultiplier: "1.0",
     timezone: "America/New_York",
-    darkMode: false,
   });
 
   const [platforms] = useState<PlatformConnection[]>(defaultPlatforms);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const loadPreferences = useCallback(async () => {
     try {
@@ -90,7 +90,6 @@ export default function SettingsPage() {
         setPreferences({
           defaultRiskMultiplier: String(prefs.defaultRiskMultiplier),
           timezone: prefs.timezone,
-          darkMode: prefs.darkMode,
         });
       }
     } catch (error) {
@@ -106,7 +105,6 @@ export default function SettingsPage() {
 
   const savePreferences = async () => {
     setIsSaving(true);
-    setSaveMessage(null);
     try {
       const response = await fetch("/api/settings", {
         method: "PUT",
@@ -114,7 +112,6 @@ export default function SettingsPage() {
         body: JSON.stringify({
           defaultRiskMultiplier: parseFloat(preferences.defaultRiskMultiplier) || 1.0,
           timezone: preferences.timezone,
-          darkMode: preferences.darkMode,
           notifyTradeCopied: notifications.tradeCopied,
           notifyDailyReport: notifications.dailyReport,
           notifyRiskLimitHit: notifications.riskLimitHit,
@@ -122,14 +119,13 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        setSaveMessage("Settings saved successfully");
-        setTimeout(() => setSaveMessage(null), 3000);
+        toast.success("Settings saved successfully");
       } else {
-        setSaveMessage("Failed to save settings");
+        toast.error("Failed to save settings");
       }
     } catch (error) {
       console.error("Failed to save preferences:", error);
-      setSaveMessage("Failed to save settings");
+      toast.error("Failed to save settings");
     } finally {
       setIsSaving(false);
     }
@@ -161,9 +157,6 @@ export default function SettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {saveMessage && (
-            <p className="text-sm text-muted-foreground">{saveMessage}</p>
-          )}
           <Button onClick={savePreferences} disabled={isSaving}>
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
@@ -357,9 +350,9 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={preferences.darkMode}
+              checked={theme === "dark"}
               onCheckedChange={(checked) =>
-                handlePreferenceChange("darkMode", checked)
+                setTheme(checked ? "dark" : "light")
               }
               aria-label="Toggle dark mode"
             />
