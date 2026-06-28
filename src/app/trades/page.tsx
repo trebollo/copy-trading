@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Metadata } from "next";
 import { TradesPageContent } from "@/components/trades/trades-page";
 
@@ -15,7 +16,9 @@ export default function TradesPage() {
           View all your trades across accounts with filtering and sorting.
         </p>
       </div>
-      <TradesPageContent />
+      <Suspense fallback={<div className="flex items-center justify-center py-12 text-muted-foreground">Loading trades...</div>}>
+        <TradesPageContent />
+      </Suspense>
     </div>
   );
 }

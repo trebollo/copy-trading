@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,6 +94,10 @@ const mockTrades: Trade[] = [
 ];
 
 export function TradesPageContent() {
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
+
+  const [dateFilter, setDateFilter] = useState<string>(dateParam || "all");
   const [symbolFilter, setSymbolFilter] = useState<string>("all");
   const [sideFilter, setSideFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -103,6 +108,11 @@ export function TradesPageContent() {
 
   const filteredAndSortedTrades = useMemo(() => {
     let filtered = [...mockTrades];
+
+    // Apply date filter
+    if (dateFilter !== "all") {
+      filtered = filtered.filter((t) => t.openedAt.startsWith(dateFilter));
+    }
 
     // Apply filters
     if (symbolFilter !== "all") {
@@ -145,7 +155,7 @@ export function TradesPageContent() {
     });
 
     return filtered;
-  }, [symbolFilter, sideFilter, statusFilter, sortField, sortDirection]);
+  }, [dateFilter, symbolFilter, sideFilter, statusFilter, sortField, sortDirection]);
 
   const totalPages = Math.ceil(filteredAndSortedTrades.length / pageSize);
   const paginatedTrades = filteredAndSortedTrades.slice(
@@ -164,6 +174,9 @@ export function TradesPageContent() {
   }
 
   const uniqueSymbols = Array.from(new Set(mockTrades.map((t) => t.symbol))).sort();
+  const uniqueDates = Array.from(
+    new Set(mockTrades.map((t) => t.openedAt.split("T")[0]))
+  ).sort().reverse();
 
   return (
     <Card>
@@ -173,6 +186,29 @@ export function TradesPageContent() {
       <CardContent className="space-y-4">
         {/* Filters */}
         <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Date:</span>
+            <Select
+              value={dateFilter}
+              onValueChange={(v) => {
+                setDateFilter(v);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {uniqueDates.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Symbol:</span>
             <Select

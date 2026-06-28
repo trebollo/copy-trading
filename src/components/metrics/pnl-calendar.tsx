@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   format,
   startOfMonth,
@@ -40,9 +41,16 @@ function getPnlColor(pnl: number, maxAbsPnl: number): string {
   }
 }
 
+function getPnlTextColor(pnl: number): string {
+  if (pnl > 0) return "text-green-700 dark:text-green-300";
+  if (pnl < 0) return "text-red-700 dark:text-red-300";
+  return "text-muted-foreground";
+}
+
 const DAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Week Total"];
 
 export function PnlCalendar({ data }: PnlCalendarProps) {
+  const router = useRouter();
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (data.length > 0) {
       return startOfMonth(parseISO(data[0].date));
@@ -148,11 +156,20 @@ export function PnlCalendar({ data }: PnlCalendarProps) {
               const colorClass = dayData
                 ? getPnlColor(dayData.pnl, maxAbsPnl)
                 : "bg-muted/50";
+              const textColorClass = dayData
+                ? getPnlTextColor(dayData.pnl)
+                : "text-muted-foreground";
+              const isClickable = dayData && dayData.trades > 0;
 
               return (
                 <div
                   key={dateStr}
-                  className={`min-h-[4rem] rounded-sm flex flex-col justify-between p-1 text-xs cursor-default transition-transform ${colorClass} ${dayData && dayData.pnl > 0 ? "text-green-950 dark:text-green-100" : ""} ${dayData && dayData.pnl < 0 ? "text-red-950 dark:text-red-100" : "text-muted-foreground"}`}
+                  className={`min-h-[4rem] rounded-sm flex flex-col justify-between p-1 text-xs transition-transform ${colorClass} ${textColorClass} ${isClickable ? "cursor-pointer hover:scale-105 hover:ring-2 hover:ring-primary/50" : "cursor-default"}`}
+                  onClick={() => {
+                    if (isClickable) {
+                      router.push(`/trades?date=${dateStr}`);
+                    }
+                  }}
                 >
                   {/* Day number - top left */}
                   <span className="text-[10px] leading-none font-medium">

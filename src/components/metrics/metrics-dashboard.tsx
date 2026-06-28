@@ -148,7 +148,12 @@ export function MetricsDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        setMetrics(data);
+        // If data is effectively empty (no real trades), use mock data
+        if (data.metrics?.totalTrades === 0 && data.accountCount === 0) {
+          setMetrics(mockMetricsData);
+        } else {
+          setMetrics(data);
+        }
       } else {
         // Fallback to mock data
         setMetrics(mockMetricsData);
