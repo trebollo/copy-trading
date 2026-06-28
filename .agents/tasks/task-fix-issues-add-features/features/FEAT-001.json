@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix demo mode login, dark mode, and add toast notification system. Three interconnected UX fixes that affect the global app shell.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix Demo Mode Login in src/app/landing.tsx: Change the 'Enter Demo Mode' button to call signIn('demo', { callbackUrl: '/dashboard' }) instead of router.push('/dashboard'). This properly authenticates with the demo credentials provider.",
     "2. Fix the login page at src/app/login/page.tsx: Add a demo mode button that calls signIn('demo', { callbackUrl: '/dashboard' }). Check NEXT_PUBLIC_DEMO_MODE env var on client side.",
@@ -29,5 +29,5 @@
     "Run pnpm build and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes build and pass tests. next-themes v0.4.6 and sonner v2.0.7 installed. The handlePreferenceChange function in settings still accepts string|boolean but darkMode is no longer part of Preferences - this is fine since the function signature is generic."
 }
