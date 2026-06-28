@@ -1,7 +1,14 @@
 {
   "task_id": "task-fix-issues-add-features",
   "task_description": "Fix Google login (demo mode), dark mode, notifications/toasts. Add complete trades list page. Enhance metrics with profit factor chart, win rate chart, session breakdown. Redesign group member list as compact table rows.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "pnpm build succeeds with all routes correctly generated including /trades. All 146 tests pass. All three features implemented: demo login fix + dark mode + toasts, trades page + metrics enhancements, and compact member table."
+  }
 }

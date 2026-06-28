@@ -28,61 +28,69 @@ interface Trade {
 type SortField = "openedAt" | "symbol" | "side" | "quantity" | "entryPrice" | "pnl" | "status";
 type SortDirection = "asc" | "desc";
 
-function generateMockTrades(): Trade[] {
-  const symbols = ["ES", "NQ", "RTY", "YM"];
-  const sides: ("buy" | "sell")[] = ["buy", "sell"];
-  const trades: Trade[] = [];
-
-  const now = new Date();
-
-  for (let i = 0; i < 60; i++) {
-    const symbol = symbols[i % symbols.length];
-    const side = sides[i % 2];
-    const status = i < 5 ? "open" : "closed";
-    const daysAgo = Math.floor(i / 4);
-    const hour = (i * 3) % 24; // Spread across all hours to cover sessions
-    const date = new Date(now);
-    date.setDate(date.getDate() - daysAgo);
-    date.setHours(hour, Math.floor(Math.random() * 60), 0, 0);
-
-    let entryPrice: number;
-    switch (symbol) {
-      case "ES":
-        entryPrice = 5200 + Math.random() * 100;
-        break;
-      case "NQ":
-        entryPrice = 18500 + Math.random() * 500;
-        break;
-      case "RTY":
-        entryPrice = 2050 + Math.random() * 50;
-        break;
-      case "YM":
-        entryPrice = 39000 + Math.random() * 500;
-        break;
-      default:
-        entryPrice = 1000;
-    }
-
-    const pnl = status === "closed"
-      ? Math.round((Math.random() * 1200 - 400) * 100) / 100
-      : null;
-
-    trades.push({
-      id: `trade-${i + 1}`,
-      symbol,
-      side,
-      quantity: Math.floor(Math.random() * 5) + 1,
-      entryPrice: Math.round(entryPrice * 100) / 100,
-      pnl,
-      status,
-      openedAt: date.toISOString(),
-    });
-  }
-
-  return trades;
-}
-
-const mockTrades = generateMockTrades();
+// Deterministic mock trades with fixed values for stable rendering
+const mockTrades: Trade[] = [
+  { id: "trade-1", symbol: "ES", side: "buy", quantity: 2, entryPrice: 5248.50, pnl: null, status: "open", openedAt: "2025-01-20T14:30:00.000Z" },
+  { id: "trade-2", symbol: "NQ", side: "sell", quantity: 1, entryPrice: 18742.25, pnl: null, status: "open", openedAt: "2025-01-20T11:15:00.000Z" },
+  { id: "trade-3", symbol: "RTY", side: "buy", quantity: 3, entryPrice: 2068.40, pnl: null, status: "open", openedAt: "2025-01-20T09:45:00.000Z" },
+  { id: "trade-4", symbol: "YM", side: "sell", quantity: 1, entryPrice: 39245.00, pnl: null, status: "open", openedAt: "2025-01-20T06:20:00.000Z" },
+  { id: "trade-5", symbol: "ES", side: "buy", quantity: 4, entryPrice: 5231.75, pnl: null, status: "open", openedAt: "2025-01-20T03:10:00.000Z" },
+  { id: "trade-6", symbol: "NQ", side: "sell", quantity: 2, entryPrice: 18685.50, pnl: 345.20, status: "closed", openedAt: "2025-01-19T21:00:00.000Z" },
+  { id: "trade-7", symbol: "RTY", side: "buy", quantity: 1, entryPrice: 2075.10, pnl: -128.45, status: "closed", openedAt: "2025-01-19T18:30:00.000Z" },
+  { id: "trade-8", symbol: "YM", side: "sell", quantity: 3, entryPrice: 39180.00, pnl: 512.80, status: "closed", openedAt: "2025-01-19T15:45:00.000Z" },
+  { id: "trade-9", symbol: "ES", side: "buy", quantity: 2, entryPrice: 5265.25, pnl: -87.30, status: "closed", openedAt: "2025-01-19T13:20:00.000Z" },
+  { id: "trade-10", symbol: "NQ", side: "sell", quantity: 1, entryPrice: 18810.75, pnl: 224.60, status: "closed", openedAt: "2025-01-19T10:00:00.000Z" },
+  { id: "trade-11", symbol: "RTY", side: "buy", quantity: 2, entryPrice: 2058.30, pnl: 156.90, status: "closed", openedAt: "2025-01-19T07:15:00.000Z" },
+  { id: "trade-12", symbol: "YM", side: "sell", quantity: 1, entryPrice: 39320.50, pnl: -215.40, status: "closed", openedAt: "2025-01-19T04:30:00.000Z" },
+  { id: "trade-13", symbol: "ES", side: "sell", quantity: 3, entryPrice: 5272.00, pnl: 438.75, status: "closed", openedAt: "2025-01-19T01:45:00.000Z" },
+  { id: "trade-14", symbol: "NQ", side: "buy", quantity: 2, entryPrice: 18650.25, pnl: -312.50, status: "closed", openedAt: "2025-01-18T22:30:00.000Z" },
+  { id: "trade-15", symbol: "RTY", side: "sell", quantity: 1, entryPrice: 2082.60, pnl: 89.20, status: "closed", openedAt: "2025-01-18T19:15:00.000Z" },
+  { id: "trade-16", symbol: "YM", side: "buy", quantity: 2, entryPrice: 39095.00, pnl: 675.30, status: "closed", openedAt: "2025-01-18T16:00:00.000Z" },
+  { id: "trade-17", symbol: "ES", side: "buy", quantity: 1, entryPrice: 5238.90, pnl: 192.45, status: "closed", openedAt: "2025-01-18T14:30:00.000Z" },
+  { id: "trade-18", symbol: "NQ", side: "sell", quantity: 3, entryPrice: 18775.00, pnl: -178.90, status: "closed", openedAt: "2025-01-18T11:45:00.000Z" },
+  { id: "trade-19", symbol: "RTY", side: "buy", quantity: 2, entryPrice: 2063.80, pnl: 267.15, status: "closed", openedAt: "2025-01-18T09:00:00.000Z" },
+  { id: "trade-20", symbol: "YM", side: "sell", quantity: 1, entryPrice: 39410.25, pnl: 145.60, status: "closed", openedAt: "2025-01-18T06:15:00.000Z" },
+  { id: "trade-21", symbol: "ES", side: "sell", quantity: 2, entryPrice: 5285.50, pnl: -56.80, status: "closed", openedAt: "2025-01-18T03:30:00.000Z" },
+  { id: "trade-22", symbol: "NQ", side: "buy", quantity: 1, entryPrice: 18620.75, pnl: 534.25, status: "closed", openedAt: "2025-01-18T00:45:00.000Z" },
+  { id: "trade-23", symbol: "RTY", side: "sell", quantity: 4, entryPrice: 2071.20, pnl: -142.30, status: "closed", openedAt: "2025-01-17T21:30:00.000Z" },
+  { id: "trade-24", symbol: "YM", side: "buy", quantity: 2, entryPrice: 39150.00, pnl: 328.90, status: "closed", openedAt: "2025-01-17T18:15:00.000Z" },
+  { id: "trade-25", symbol: "ES", side: "buy", quantity: 3, entryPrice: 5255.75, pnl: 412.50, status: "closed", openedAt: "2025-01-17T15:00:00.000Z" },
+  { id: "trade-26", symbol: "NQ", side: "sell", quantity: 2, entryPrice: 18890.50, pnl: -267.80, status: "closed", openedAt: "2025-01-17T12:30:00.000Z" },
+  { id: "trade-27", symbol: "RTY", side: "buy", quantity: 1, entryPrice: 2055.90, pnl: 78.45, status: "closed", openedAt: "2025-01-17T10:15:00.000Z" },
+  { id: "trade-28", symbol: "YM", side: "sell", quantity: 3, entryPrice: 39275.75, pnl: 189.60, status: "closed", openedAt: "2025-01-17T07:00:00.000Z" },
+  { id: "trade-29", symbol: "ES", side: "sell", quantity: 1, entryPrice: 5292.30, pnl: -345.20, status: "closed", openedAt: "2025-01-17T04:45:00.000Z" },
+  { id: "trade-30", symbol: "NQ", side: "buy", quantity: 2, entryPrice: 18705.25, pnl: 623.40, status: "closed", openedAt: "2025-01-17T01:30:00.000Z" },
+  { id: "trade-31", symbol: "RTY", side: "sell", quantity: 2, entryPrice: 2079.50, pnl: 95.70, status: "closed", openedAt: "2025-01-16T22:00:00.000Z" },
+  { id: "trade-32", symbol: "YM", side: "buy", quantity: 1, entryPrice: 39050.00, pnl: -198.30, status: "closed", openedAt: "2025-01-16T19:30:00.000Z" },
+  { id: "trade-33", symbol: "ES", side: "buy", quantity: 4, entryPrice: 5220.60, pnl: 756.80, status: "closed", openedAt: "2025-01-16T16:45:00.000Z" },
+  { id: "trade-34", symbol: "NQ", side: "sell", quantity: 1, entryPrice: 18835.00, pnl: 112.35, status: "closed", openedAt: "2025-01-16T14:00:00.000Z" },
+  { id: "trade-35", symbol: "RTY", side: "buy", quantity: 3, entryPrice: 2066.75, pnl: -89.60, status: "closed", openedAt: "2025-01-16T11:15:00.000Z" },
+  { id: "trade-36", symbol: "YM", side: "sell", quantity: 2, entryPrice: 39365.50, pnl: 287.40, status: "closed", openedAt: "2025-01-16T08:30:00.000Z" },
+  { id: "trade-37", symbol: "ES", side: "sell", quantity: 2, entryPrice: 5278.40, pnl: -423.15, status: "closed", openedAt: "2025-01-16T05:45:00.000Z" },
+  { id: "trade-38", symbol: "NQ", side: "buy", quantity: 3, entryPrice: 18580.75, pnl: 445.90, status: "closed", openedAt: "2025-01-16T02:30:00.000Z" },
+  { id: "trade-39", symbol: "RTY", side: "sell", quantity: 1, entryPrice: 2085.30, pnl: 167.25, status: "closed", openedAt: "2025-01-15T23:00:00.000Z" },
+  { id: "trade-40", symbol: "YM", side: "buy", quantity: 2, entryPrice: 39125.25, pnl: -78.50, status: "closed", openedAt: "2025-01-15T20:15:00.000Z" },
+  { id: "trade-41", symbol: "ES", side: "buy", quantity: 1, entryPrice: 5242.15, pnl: 298.60, status: "closed", openedAt: "2025-01-15T17:30:00.000Z" },
+  { id: "trade-42", symbol: "NQ", side: "sell", quantity: 2, entryPrice: 18920.00, pnl: -156.75, status: "closed", openedAt: "2025-01-15T14:45:00.000Z" },
+  { id: "trade-43", symbol: "RTY", side: "buy", quantity: 2, entryPrice: 2052.60, pnl: 234.80, status: "closed", openedAt: "2025-01-15T12:00:00.000Z" },
+  { id: "trade-44", symbol: "YM", side: "sell", quantity: 1, entryPrice: 39445.00, pnl: 567.30, status: "closed", openedAt: "2025-01-15T09:15:00.000Z" },
+  { id: "trade-45", symbol: "ES", side: "sell", quantity: 3, entryPrice: 5261.80, pnl: 178.45, status: "closed", openedAt: "2025-01-15T06:30:00.000Z" },
+  { id: "trade-46", symbol: "NQ", side: "buy", quantity: 1, entryPrice: 18665.50, pnl: -412.60, status: "closed", openedAt: "2025-01-15T03:45:00.000Z" },
+  { id: "trade-47", symbol: "RTY", side: "sell", quantity: 3, entryPrice: 2073.90, pnl: 56.20, status: "closed", openedAt: "2025-01-15T01:00:00.000Z" },
+  { id: "trade-48", symbol: "YM", side: "buy", quantity: 2, entryPrice: 39210.75, pnl: 389.15, status: "closed", openedAt: "2025-01-14T22:15:00.000Z" },
+  { id: "trade-49", symbol: "ES", side: "buy", quantity: 2, entryPrice: 5235.25, pnl: -234.70, status: "closed", openedAt: "2025-01-14T19:30:00.000Z" },
+  { id: "trade-50", symbol: "NQ", side: "sell", quantity: 4, entryPrice: 18780.25, pnl: 712.40, status: "closed", openedAt: "2025-01-14T16:45:00.000Z" },
+  { id: "trade-51", symbol: "RTY", side: "buy", quantity: 1, entryPrice: 2060.45, pnl: 145.80, status: "closed", openedAt: "2025-01-14T14:00:00.000Z" },
+  { id: "trade-52", symbol: "YM", side: "sell", quantity: 2, entryPrice: 39330.00, pnl: -289.60, status: "closed", openedAt: "2025-01-14T11:15:00.000Z" },
+  { id: "trade-53", symbol: "ES", side: "sell", quantity: 1, entryPrice: 5298.70, pnl: 423.50, status: "closed", openedAt: "2025-01-14T08:30:00.000Z" },
+  { id: "trade-54", symbol: "NQ", side: "buy", quantity: 2, entryPrice: 18545.50, pnl: -67.85, status: "closed", openedAt: "2025-01-14T05:45:00.000Z" },
+  { id: "trade-55", symbol: "RTY", side: "sell", quantity: 2, entryPrice: 2088.20, pnl: 312.40, status: "closed", openedAt: "2025-01-14T03:00:00.000Z" },
+  { id: "trade-56", symbol: "YM", side: "buy", quantity: 3, entryPrice: 39075.50, pnl: 198.75, status: "closed", openedAt: "2025-01-14T00:15:00.000Z" },
+  { id: "trade-57", symbol: "ES", side: "buy", quantity: 2, entryPrice: 5252.90, pnl: -156.30, status: "closed", openedAt: "2025-01-13T21:30:00.000Z" },
+  { id: "trade-58", symbol: "NQ", side: "sell", quantity: 1, entryPrice: 18860.75, pnl: 278.90, status: "closed", openedAt: "2025-01-13T18:45:00.000Z" },
+  { id: "trade-59", symbol: "RTY", side: "buy", quantity: 1, entryPrice: 2057.35, pnl: -45.20, status: "closed", openedAt: "2025-01-13T15:00:00.000Z" },
+  { id: "trade-60", symbol: "YM", side: "sell", quantity: 2, entryPrice: 39290.25, pnl: 534.60, status: "closed", openedAt: "2025-01-13T12:15:00.000Z" },
+];
 
 export function TradesPageContent() {
   const [symbolFilter, setSymbolFilter] = useState<string>("all");

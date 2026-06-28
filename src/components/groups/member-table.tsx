@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, X, Pencil, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,12 @@ function MemberTableRow({
   const [riskMultiplier, setRiskMultiplier] = useState(member.riskMultiplier);
   const [maxLots, setMaxLots] = useState(member.maxLots);
   const [maxDailyLoss, setMaxDailyLoss] = useState(member.maxDailyLoss);
+
+  useEffect(() => {
+    setRiskMultiplier(member.riskMultiplier);
+    setMaxLots(member.maxLots);
+    setMaxDailyLoss(member.maxDailyLoss);
+  }, [member.riskMultiplier, member.maxLots, member.maxDailyLoss]);
 
   const handleSave = () => {
     onSave(member.id, { riskMultiplier, maxLots, maxDailyLoss });
