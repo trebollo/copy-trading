@@ -1,8 +1,17 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, ArrowUpDown, Filter } from "lucide-react";
+import { Plus, ArrowUpDown, Filter, Check, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { GroupCard, type GroupCardData } from "@/components/groups/group-card";
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
 import type { CreateCopyGroupInput } from "@/lib/validations/copy-group";
@@ -58,6 +67,10 @@ const sampleGroups: GroupCardData[] = [
 export default function GroupsPage() {
   const [groups, setGroups] = useState<GroupCardData[]>(sampleGroups);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<GroupCardData | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   // Sorting state
   const [sortField, setSortField] = useState<SortField>("name");
@@ -128,10 +141,37 @@ export default function GroupsPage() {
         group.id === id ? { ...group, isActive: !group.isActive } : group
       )
     );
+    const group = groups.find((g) => g.id === id);
+    toast.success(group?.isActive ? "Group deactivated" : "Group activated");
   };
 
   const handleDelete = (id: string) => {
     setGroups((prev) => prev.filter((group) => group.id !== id));
+    toast.success("Group deleted");
+  };
+
+  const handleEdit = (id: string) => {
+    const group = groups.find((g) => g.id === id);
+    if (group) {
+      setEditingGroup(group);
+      setEditName(group.name);
+      setEditDescription(group.description || "");
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingGroup || !editName.trim()) return;
+    setGroups((prev) =>
+      prev.map((group) =>
+        group.id === editingGroup.id
+          ? { ...group, name: editName.trim(), description: editDescription.trim() || null }
+          : group
+      )
+    );
+    setEditDialogOpen(false);
+    setEditingGroup(null);
+    toast.success("Group updated");
   };
 
   return (
@@ -227,6 +267,7 @@ export default function GroupsPage() {
               key={group.id}
               group={group}
               onToggle={handleToggle}
+              onEdit={handleEdit}
               onDelete={handleDelete}
             />
           ))}
@@ -239,6 +280,49 @@ export default function GroupsPage() {
         onSubmit={handleCreate}
         accounts={sampleAccounts}
       />
+
+      {/* Edit Group Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Edit Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="edit-group-name">
+                Group Name
+              </label>
+              <Input
+                id="edit-group-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Group name"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="edit-group-description">
+                Description
+              </label>
+              <Input
+                id="edit-group-description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Brief description"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <X className="mr-1 h-3 w-3" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={!editName.trim()}>
+              <Check className="mr-1 h-3 w-3" />
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -72,7 +72,7 @@ export default function SettingsPage() {
     timezone: "America/New_York",
   });
 
-  const [platforms] = useState<PlatformConnection[]>(defaultPlatforms);
+  const [platforms, setPlatforms] = useState<PlatformConnection[]>(defaultPlatforms);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -91,9 +91,41 @@ export default function SettingsPage() {
           defaultRiskMultiplier: String(prefs.defaultRiskMultiplier),
           timezone: prefs.timezone,
         });
+      } else {
+        // Fallback: load from localStorage
+        const saved = localStorage.getItem("copy-trading-settings");
+        if (saved) {
+          const prefs = JSON.parse(saved);
+          setNotifications({
+            tradeCopied: prefs.notifyTradeCopied ?? true,
+            dailyReport: prefs.notifyDailyReport ?? true,
+            riskLimitHit: prefs.notifyRiskLimitHit ?? true,
+          });
+          setPreferences({
+            defaultRiskMultiplier: String(prefs.defaultRiskMultiplier ?? 1.0),
+            timezone: prefs.timezone ?? "America/New_York",
+          });
+        }
       }
     } catch (error) {
-      console.error("Failed to load preferences:", error);
+      // Fallback: load from localStorage
+      const saved = localStorage.getItem("copy-trading-settings");
+      if (saved) {
+        try {
+          const prefs = JSON.parse(saved);
+          setNotifications({
+            tradeCopied: prefs.notifyTradeCopied ?? true,
+            dailyReport: prefs.notifyDailyReport ?? true,
+            riskLimitHit: prefs.notifyRiskLimitHit ?? true,
+          });
+          setPreferences({
+            defaultRiskMultiplier: String(prefs.defaultRiskMultiplier ?? 1.0),
+            timezone: prefs.timezone ?? "America/New_York",
+          });
+        } catch {
+          // Use defaults
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -105,29 +137,55 @@ export default function SettingsPage() {
 
   const savePreferences = async () => {
     setIsSaving(true);
+    const settingsData = {
+      defaultRiskMultiplier: parseFloat(preferences.defaultRiskMultiplier) || 1.0,
+      timezone: preferences.timezone,
+      notifyTradeCopied: notifications.tradeCopied,
+      notifyDailyReport: notifications.dailyReport,
+      notifyRiskLimitHit: notifications.riskLimitHit,
+    };
+
     try {
       const response = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          defaultRiskMultiplier: parseFloat(preferences.defaultRiskMultiplier) || 1.0,
-          timezone: preferences.timezone,
-          notifyTradeCopied: notifications.tradeCopied,
-          notifyDailyReport: notifications.dailyReport,
-          notifyRiskLimitHit: notifications.riskLimitHit,
-        }),
+        body: JSON.stringify(settingsData),
       });
 
       if (response.ok) {
         toast.success("Settings saved successfully");
       } else {
-        toast.error("Failed to save settings");
+        // Fallback to localStorage in demo mode
+        localStorage.setItem("copy-trading-settings", JSON.stringify(settingsData));
+        toast.success("Settings saved locally");
       }
     } catch (error) {
-      console.error("Failed to save preferences:", error);
-      toast.error("Failed to save settings");
+      // Fallback to localStorage when API is unavailable
+      localStorage.setItem("copy-trading-settings", JSON.stringify(settingsData));
+      toast.success("Settings saved locally");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePlatformToggle = (platformId: string) => {
+    setPlatforms((prev) =>
+      prev.map((p) => {
+        if (p.id === platformId) {
+          const newStatus = p.status === "connected" ? "disconnected" : "connected";
+          return {
+            ...p,
+            status: newStatus,
+            lastSync: newStatus === "connected" ? "Just now" : undefined,
+          };
+        }
+        return p;
+      })
+    );
+    const platform = platforms.find((p) => p.id === platformId);
+    if (platform) {
+      const action = platform.status === "connected" ? "reconnected" : "connected";
+      toast.success(`${platform.name} ${action} successfully`);
     }
   };
 
@@ -277,6 +335,7 @@ export default function SettingsPage() {
               <Button
                 variant={platform.status === "connected" ? "outline" : "default"}
                 size="sm"
+                onClick={() => handlePlatformToggle(platform.id)}
                 aria-label={
                   platform.status === "connected"
                     ? `Reconnect ${platform.name}`

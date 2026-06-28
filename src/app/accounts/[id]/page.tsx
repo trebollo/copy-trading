@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, RefreshCw, Pencil, Users } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -111,7 +113,9 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
 };
 
 export default function AccountDetailPage() {
-  const [account] = useState(sampleAccount);
+  const params = useParams();
+  const router = useRouter();
+  const [account, setAccount] = useState(sampleAccount);
   const [trades] = useState<TradeRow[]>(sampleTrades);
   const [metrics] = useState<DailyMetricData[]>(sampleMetrics);
 
@@ -119,6 +123,20 @@ export default function AccountDetailPage() {
     (sum, trade) => sum + (trade.pnl || 0),
     0
   );
+
+  const handleSync = () => {
+    setAccount((prev) => ({ ...prev, updatedAt: new Date().toISOString() }));
+    toast.success("Account synced successfully");
+  };
+
+  const handleEditSettings = () => {
+    toast.info("Edit settings dialog coming soon");
+  };
+
+  const handleViewInGroup = () => {
+    router.push("/groups");
+    toast.info("Navigating to groups...");
+  };
 
   return (
     <div className="space-y-6">
@@ -145,15 +163,15 @@ export default function AccountDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleViewInGroup}>
             <Users className="mr-2 h-4 w-4" />
             View in Group
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleEditSettings}>
             <Pencil className="mr-2 h-4 w-4" />
             Edit Settings
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={handleSync}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Sync
           </Button>

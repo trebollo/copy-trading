@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix all broken interactive actions across the application: Groups page missing onEdit handler, Accounts page 'Sync All' button doing nothing, Settings page save failing in demo mode and platform connect/reconnect buttons doing nothing, Header notification bell and search bar doing nothing, Account detail page buttons (Edit Settings, View in Group, Sync) doing nothing.",
+  "status": "in_progress",
+  "steps": [
+    "In src/app/groups/page.tsx: Add an edit handler that opens an inline edit dialog (similar to the one in group detail page) or navigates to the group detail page. Pass handleEdit as the onEdit prop to GroupCard.",
+    "In src/app/accounts/page.tsx: Add an onClick handler to the 'Sync All' button that iterates all accounts, updates their updatedAt, and shows a toast 'All accounts synced'.",
+    "In src/app/settings/page.tsx: Make the save function work in demo mode by catching the 401/failure and saving to localStorage instead, showing a success toast regardless. Add onClick handlers to platform Connect/Reconnect buttons that toggle connection status in local state and show a toast.",
+    "In src/components/shared/header.tsx: Make the notification bell open a dropdown/popover showing sample notifications (e.g. 'Trade copied successfully', 'Daily report available'). Make the search input functional with a basic filter or at minimum show a toast 'Search functionality coming soon' on Enter key.",
+    "In src/app/accounts/[id]/page.tsx: Wire up the 'Sync' button to update updatedAt and show toast. Wire 'Edit Settings' to show a toast or open an edit dialog. Wire 'View in Group' to navigate to /groups or show toast.",
+    "In src/app/groups/[id]/page.tsx: The page currently uses hardcoded sampleGroup regardless of which group was clicked. Add useParams to get the group ID from the URL and at least display it (data still mock but acknowledges the route param)."
+  ],
+  "acceptance_criteria": [
+    "Every clickable button/action across all pages produces a visible response (state change, toast, dialog, or navigation)",
+    "Groups page Edit dropdown item opens edit dialog or navigates to group detail",
+    "Accounts page Sync All button syncs all accounts and shows toast",
+    "Settings page Save works in demo mode (localStorage fallback) with success toast",
+    "Settings platform buttons toggle connection state and show toast",
+    "Header bell icon opens notification panel/dropdown",
+    "Account detail page buttons all produce visible feedback",
+    "pnpm build passes without errors"
+  ],
+  "verification": [
+    "pnpm build completes successfully",
+    "Grep for 'onEdit' in groups/page.tsx to confirm handler is passed",
+    "Grep for 'Sync All' handler in accounts/page.tsx"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

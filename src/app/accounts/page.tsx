@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Plus, RefreshCw, ArrowUpDown, Filter } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AccountCard } from "@/components/accounts/account-card";
 import { CreateAccountDialog } from "@/components/accounts/create-account-dialog";
@@ -157,6 +158,14 @@ export default function AccountsPage() {
         acc.id === id ? { ...acc, updatedAt: new Date().toISOString() } : acc
       )
     );
+    toast.success("Account synced");
+  };
+
+  const handleSyncAll = () => {
+    setAccounts((prev) =>
+      prev.map((acc) => ({ ...acc, updatedAt: new Date().toISOString() }))
+    );
+    toast.success("All accounts synced");
   };
 
   const handleDelete = (id: string) => {
@@ -183,7 +192,7 @@ export default function AccountsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleSyncAll}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Sync All
           </Button>

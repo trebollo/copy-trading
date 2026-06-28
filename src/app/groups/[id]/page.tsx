@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ArrowLeft, Crown, Settings, Plus, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -137,7 +138,9 @@ const platformLabels: Record<string, string> = {
 };
 
 export default function GroupDetailPage() {
-  const [group, setGroup] = useState(sampleGroup);
+  const params = useParams();
+  const groupId = params.id as string;
+  const [group, setGroup] = useState({ ...sampleGroup, id: groupId || sampleGroup.id });
   const [members, setMembers] = useState<MemberRiskData[]>(sampleMembers);
   const [activity] = useState<CopyActivityEvent[]>(sampleActivity);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
