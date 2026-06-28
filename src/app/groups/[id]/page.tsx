@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Crown, Settings, Plus, Check, X } from "lucide-react";
+import { ArrowLeft, Crown, Settings, Plus, Check, X, TrendingUp, BarChart3, Target, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,8 @@ import {
   CopyActivityFeed,
   type CopyActivityEvent,
 } from "@/components/groups/copy-activity-feed";
+import { DailyPnlChart } from "@/components/metrics/daily-pnl-chart";
+import { formatCurrency } from "@/lib/utils";
 import { TradingPlatform } from "@/lib/trading/types";
 
 // Sample data for group detail
@@ -85,6 +87,25 @@ const sampleMembers: MemberRiskData[] = [
 const sampleAvailableAccounts = [
   { id: "5", name: "Apex 100K Eval", platform: "Tradovate" },
   { id: "6", name: "TopStep 50K", platform: "Tradovate" },
+];
+
+// Group daily PnL mock data (15 days, sum of all followers' PnL)
+const groupDailyPnl = [
+  { date: "2024-01-01", pnl: 325.50 },
+  { date: "2024-01-02", pnl: -125.00 },
+  { date: "2024-01-03", pnl: 450.75 },
+  { date: "2024-01-04", pnl: 180.25 },
+  { date: "2024-01-05", pnl: -275.50 },
+  { date: "2024-01-08", pnl: 520.00 },
+  { date: "2024-01-09", pnl: -90.75 },
+  { date: "2024-01-10", pnl: 375.25 },
+  { date: "2024-01-11", pnl: 245.50 },
+  { date: "2024-01-12", pnl: -180.00 },
+  { date: "2024-01-15", pnl: 425.50 },
+  { date: "2024-01-16", pnl: 310.75 },
+  { date: "2024-01-17", pnl: -150.25 },
+  { date: "2024-01-18", pnl: 290.00 },
+  { date: "2024-01-19", pnl: 185.50 },
 ];
 
 const sampleActivity: CopyActivityEvent[] = [
@@ -289,7 +310,7 @@ export default function GroupDetailPage() {
       </Card>
 
       {/* Group Summary */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -314,7 +335,79 @@ export default function GroupDetailPage() {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                <p className="text-2xl font-bold text-green-500">{formatCurrency(3245.50)}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Total PnL</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1">
+                <BarChart3 className="h-5 w-5 text-blue-500" />
+                <p className="text-2xl font-bold">12</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Total Trades Today</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1">
+                <Target className="h-5 w-5 text-orange-500" />
+                <p className="text-2xl font-bold">1.0x</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Avg Risk Multiplier</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Win Rate Card */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1">
+                <Percent className="h-5 w-5 text-purple-500" />
+                <p className="text-2xl font-bold">64%</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Win Rate</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Group Daily PnL */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Group Daily PnL</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3 mb-6">
+            <div className="text-center rounded-lg border p-3">
+              <p className="text-lg font-bold text-green-500">{formatCurrency(185.50)}</p>
+              <p className="text-xs text-muted-foreground">Today&apos;s PnL</p>
+            </div>
+            <div className="text-center rounded-lg border p-3">
+              <p className="text-lg font-bold text-green-500">{formatCurrency(1061.50)}</p>
+              <p className="text-xs text-muted-foreground">This Week&apos;s PnL</p>
+            </div>
+            <div className="text-center rounded-lg border p-3">
+              <p className="text-lg font-bold text-green-500">{formatCurrency(3245.50)}</p>
+              <p className="text-xs text-muted-foreground">This Month&apos;s PnL</p>
+            </div>
+          </div>
+          <DailyPnlChart data={groupDailyPnl} />
+        </CardContent>
+      </Card>
 
       {/* Followers */}
       <div className="space-y-3">

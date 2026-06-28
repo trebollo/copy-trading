@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Enhance the Groups section with daily PnL information and more stats on the group detail page, showing aggregated follower performance.",
+  "status": "in_progress",
+  "steps": [
+    "In src/app/groups/[id]/page.tsx: Add a 'Group Daily PnL' section with mock data showing the sum of all followers' PnL per day. Include a DailyPnlChart (reuse existing component) and a small stats summary (today's PnL, this week's PnL, this month's PnL).",
+    "In src/app/groups/[id]/page.tsx: Enhance the Group Summary cards section. Add more stats: Total PnL (sum across all members), Average Risk Multiplier, Total Trades Today, Win Rate. Use mock data derived from the sample members.",
+    "In src/components/groups/group-card.tsx: Add a small daily PnL indicator showing today's PnL for the group (e.g. '+$425.00' in green or '-$125.00' in red). This can be a new optional prop 'dailyPnl' on GroupCardData.",
+    "In src/app/groups/page.tsx: Add the dailyPnl mock values to the sampleGroups data and display them on the cards."
+  ],
+  "acceptance_criteria": [
+    "Group detail page shows daily PnL chart for the group",
+    "Group detail page shows enhanced stats (Total PnL, Avg Risk Multiplier, Trades Today, Win Rate)",
+    "Group cards on the groups list page show today's PnL",
+    "All data uses deterministic mock values",
+    "pnpm build passes without errors"
+  ],
+  "verification": [
+    "pnpm build completes successfully",
+    "Group detail page contains DailyPnlChart import or equivalent",
+    "GroupCardData interface includes dailyPnl field"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

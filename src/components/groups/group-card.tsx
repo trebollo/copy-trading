@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Crown, Users, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Crown, Users, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
 export interface GroupCardData {
@@ -29,6 +29,7 @@ export interface GroupCardData {
   memberCount: number;
   lastActivityAt?: string | null;
   createdAt: string;
+  dailyPnl?: number;
 }
 
 export interface GroupCardProps {
@@ -103,6 +104,19 @@ export function GroupCard({ group, onToggle, onEdit, onDelete }: GroupCardProps)
               {group.memberCount} follower{group.memberCount !== 1 ? "s" : ""}
             </span>
           </div>
+          {group.dailyPnl !== undefined && (
+            <div className="flex items-center gap-2 text-sm">
+              {group.dailyPnl >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-green-500" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-red-500" />
+              )}
+              <span className={group.dailyPnl >= 0 ? "font-medium text-green-500" : "font-medium text-red-500"}>
+                {group.dailyPnl >= 0 ? "+" : ""}{formatCurrency(group.dailyPnl)}
+              </span>
+              <span className="text-muted-foreground">today</span>
+            </div>
+          )}
           {group.lastActivityAt && (
             <div className="flex items-baseline justify-between text-sm">
               <span className="text-muted-foreground">Last activity</span>

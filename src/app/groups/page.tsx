@@ -39,6 +39,7 @@ const sampleGroups: GroupCardData[] = [
     memberCount: 2,
     lastActivityAt: new Date().toISOString(),
     createdAt: "2024-01-10T00:00:00Z",
+    dailyPnl: 425.50,
   },
   {
     id: "g2",
@@ -50,6 +51,7 @@ const sampleGroups: GroupCardData[] = [
     memberCount: 1,
     lastActivityAt: "2024-01-14T16:30:00Z",
     createdAt: "2024-01-05T00:00:00Z",
+    dailyPnl: -87.25,
   },
   {
     id: "g3",
@@ -61,6 +63,7 @@ const sampleGroups: GroupCardData[] = [
     memberCount: 3,
     lastActivityAt: "2024-01-08T09:00:00Z",
     createdAt: "2024-01-01T00:00:00Z",
+    dailyPnl: 0,
   },
 ];
 
