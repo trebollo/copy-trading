@@ -2,7 +2,7 @@
   "id": "FEAT-008",
   "type": "feat",
   "description": "Implement Google auth flow and clickable dashboard cards with filtering/sorting on detail pages",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Update KpiCard component to accept optional href prop and wrap in Next.js Link when provided",
     "Update DashboardOverview to pass href to each KpiCard (Total PnL -> /metrics, Active Accounts -> /accounts, Active Groups -> /groups, Total Trades -> /metrics)",
@@ -26,5 +26,5 @@
     "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Build passes cleanly. All 146 tests pass. Pre-existing dynamic route errors for /api/metrics and /api/settings remain unchanged (expected behavior for routes using getServerSession). Added maxDailyProfit field to MemberRiskData per user steering about profit limits. Group detail page now has edit group dialog, add member dialog, and summary cards showing active/inactive counts. The KpiCard component uses conditional Link wrapping with hover effects for clickable cards."
 }
