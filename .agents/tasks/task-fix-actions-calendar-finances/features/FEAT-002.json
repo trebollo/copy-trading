@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add a PnL Calendar heatmap component that shows daily PnL colored by profit/loss, with total PnL and number of trades for each day. Add it to the Metrics page and the Account detail page.",
+  "status": "completed",
+  "steps": [
+    "Create src/components/metrics/pnl-calendar.tsx: A calendar/heatmap component that renders a month grid. Each day cell is colored green (profit) or red (loss) with intensity based on amount. Clicking/hovering a day shows PnL amount and trade count. Props: data array of {date, pnl, trades}. Use date-fns for date manipulation. Style with Tailwind classes. Include month navigation (prev/next month).",
+    "In src/components/metrics/metrics-dashboard.tsx: Import PnlCalendar component. Add it as a new section in the 'overview' tab after the existing charts. Generate mock daily PnL data with trades count (30 days) to pass to the calendar. Use static deterministic data matching the existing pattern.",
+    "In src/app/accounts/[id]/page.tsx: Import PnlCalendar component. Add it as a new Card section below the PnL chart. Use the existing sampleMetrics data (which already has date, pnl, trades) to feed the calendar.",
+    "Ensure the calendar is responsive - shows full month on desktop, scrollable on mobile."
+  ],
+  "acceptance_criteria": [
+    "PnL Calendar component renders a month grid with colored day cells",
+    "Green cells for profit days, red cells for loss days, with intensity variation",
+    "Hovering/clicking a day shows the PnL amount and trade count",
+    "Calendar appears on the Metrics page overview tab",
+    "Calendar appears on the Account detail page",
+    "Month navigation works (prev/next)",
+    "pnpm build passes without errors"
+  ],
+  "verification": [
+    "pnpm build completes successfully",
+    "File src/components/metrics/pnl-calendar.tsx exists",
+    "PnlCalendar is imported in metrics-dashboard.tsx and accounts/[id]/page.tsx"
+  ],
+  "blocked_reason": null,
+  "findings": "Build passes. All 146 tests pass. PnlCalendar component created with month grid, color-coded day cells (green/red with intensity), hover tooltip showing PnL and trades, and month navigation. Added to both metrics-dashboard.tsx overview tab and accounts/[id]/page.tsx. Used date-fns for date manipulation and Tailwind for styling. NODE_OPTIONS must be unset before running pnpm build/test due to a missing proxy-bootstrap.js module."
+}
