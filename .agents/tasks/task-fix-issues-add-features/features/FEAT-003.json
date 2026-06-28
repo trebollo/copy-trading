@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "refactor",
   "description": "Redesign group member list from card layout to compact table/row layout where each member is ONE row with inline editing capabilities.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. Rewrite src/components/groups/member-risk-settings.tsx: Replace the Card-per-member layout with a table-row component. Each member should be ONE row with columns: Account Name | Platform (badge) | Active toggle (Switch) | Risk Multiplier (editable inline input, small) | Max Lots (editable inline) | Max Daily Loss (editable inline) | Actions (save/remove buttons). When not editing, show values as text. When clicking the row or an edit button, the row becomes editable inline (inputs appear in place of text). Keep the same MemberRiskData interface and onSave/onRemove props.",
     "2. Create src/components/groups/member-table.tsx: A wrapper component that renders the table header and maps over members to render MemberRiskRow components. Props: members: MemberRiskData[], onSave, onRemove. This renders a responsive table with proper headers.",

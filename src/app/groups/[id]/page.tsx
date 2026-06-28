@@ -21,10 +21,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  MemberRiskSettings,
-  type MemberRiskData,
-} from "@/components/groups/member-risk-settings";
+import { type MemberRiskData } from "@/components/groups/member-risk-settings";
+import { MemberTable } from "@/components/groups/member-table";
 import {
   CopyActivityFeed,
   type CopyActivityEvent,
@@ -326,10 +324,6 @@ export default function GroupDetailPage() {
             Add Account
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Click on any account&apos;s settings to edit risk multipliers, lot limits, and profit/loss limits.
-          Use the toggle to activate or deactivate individual accounts.
-        </p>
         {members.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center">
@@ -343,16 +337,11 @@ export default function GroupDetailPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {members.map((member) => (
-              <MemberRiskSettings
-                key={member.id}
-                member={member}
-                onSave={handleSaveMember}
-                onRemove={handleRemoveMember}
-              />
-            ))}
-          </div>
+          <MemberTable
+            members={members}
+            onSave={handleSaveMember}
+            onRemove={handleRemoveMember}
+          />
         )}
       </div>
 
