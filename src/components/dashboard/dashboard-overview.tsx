@@ -7,6 +7,7 @@ import { KpiCard } from "@/components/metrics/kpi-card";
 import { EquityCurveChart } from "@/components/metrics/equity-curve-chart";
 import { formatCurrency } from "@/lib/utils";
 import { DollarSign, Wallet, Users, Activity } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface DashboardMetrics {
   metrics: {
@@ -29,40 +30,104 @@ interface RecentTrade {
   openedAt: string;
 }
 
-function generateMockEquityCurve(): Array<{ date: string; equity: number }> {
-  const data: Array<{ date: string; equity: number }> = [];
-  let equity = 50000;
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    equity += (Math.random() - 0.4) * 800;
-    data.push({
-      date: date.toISOString().split("T")[0],
-      equity: Math.round(equity * 100) / 100,
-    });
-  }
-  return data;
-}
+// Fully static mock equity curve - 30 data points with no randomness
+const staticEquityCurve: Array<{ date: string; equity: number }> = [
+  { date: "2025-01-01", equity: 50000.0 },
+  { date: "2025-01-02", equity: 50320.45 },
+  { date: "2025-01-03", equity: 50185.3 },
+  { date: "2025-01-04", equity: 50542.18 },
+  { date: "2025-01-05", equity: 50410.62 },
+  { date: "2025-01-06", equity: 50875.9 },
+  { date: "2025-01-07", equity: 51032.55 },
+  { date: "2025-01-08", equity: 50890.2 },
+  { date: "2025-01-09", equity: 51245.8 },
+  { date: "2025-01-10", equity: 51580.35 },
+  { date: "2025-01-11", equity: 51420.1 },
+  { date: "2025-01-12", equity: 51795.45 },
+  { date: "2025-01-13", equity: 52010.7 },
+  { date: "2025-01-14", equity: 51860.25 },
+  { date: "2025-01-15", equity: 52235.9 },
+  { date: "2025-01-16", equity: 52480.15 },
+  { date: "2025-01-17", equity: 52310.6 },
+  { date: "2025-01-18", equity: 52675.85 },
+  { date: "2025-01-19", equity: 52890.4 },
+  { date: "2025-01-20", equity: 52745.2 },
+  { date: "2025-01-21", equity: 53120.55 },
+  { date: "2025-01-22", equity: 53350.9 },
+  { date: "2025-01-23", equity: 53180.45 },
+  { date: "2025-01-24", equity: 53545.7 },
+  { date: "2025-01-25", equity: 53780.25 },
+  { date: "2025-01-26", equity: 53620.8 },
+  { date: "2025-01-27", equity: 53985.15 },
+  { date: "2025-01-28", equity: 54210.6 },
+  { date: "2025-01-29", equity: 54050.35 },
+  { date: "2025-01-30", equity: 54432.5 },
+];
 
 const mockMetrics: DashboardMetrics = {
   metrics: {
     totalPnl: 4832.5,
     totalTrades: 142,
     winRate: 0.64,
-    equityCurve: generateMockEquityCurve(),
+    equityCurve: staticEquityCurve,
   },
   accountCount: 3,
   activeAccountCount: 2,
 };
 
 const mockRecentTrades: RecentTrade[] = [
-  { id: "t1", symbol: "ES", side: "long", quantity: 2, pnl: 425.0, status: "closed", openedAt: new Date().toISOString() },
-  { id: "t2", symbol: "NQ", side: "short", quantity: 1, pnl: -175.0, status: "closed", openedAt: new Date().toISOString() },
-  { id: "t3", symbol: "ES", side: "long", quantity: 3, pnl: 612.5, status: "closed", openedAt: new Date().toISOString() },
-  { id: "t4", symbol: "RTY", side: "long", quantity: 2, pnl: null, status: "open", openedAt: new Date().toISOString() },
-  { id: "t5", symbol: "NQ", side: "long", quantity: 1, pnl: 287.5, status: "closed", openedAt: new Date().toISOString() },
+  { id: "t1", symbol: "ES", side: "long", quantity: 2, pnl: 425.0, status: "closed", openedAt: "2025-01-30T14:30:00Z" },
+  { id: "t2", symbol: "NQ", side: "short", quantity: 1, pnl: -175.0, status: "closed", openedAt: "2025-01-30T13:15:00Z" },
+  { id: "t3", symbol: "ES", side: "long", quantity: 3, pnl: 612.5, status: "closed", openedAt: "2025-01-30T11:45:00Z" },
+  { id: "t4", symbol: "RTY", side: "long", quantity: 2, pnl: null, status: "open", openedAt: "2025-01-30T10:20:00Z" },
+  { id: "t5", symbol: "NQ", side: "long", quantity: 1, pnl: 287.5, status: "closed", openedAt: "2025-01-30T09:00:00Z" },
 ];
+
+// Check if the API data is effectively empty
+function isDataEmpty(metrics: DashboardMetrics | null): boolean {
+  if (!metrics) return true;
+  const m = metrics.metrics;
+  return (
+    m.totalTrades === 0 &&
+    (!m.equityCurve || m.equityCurve.length === 0) &&
+    metrics.accountCount === 0
+  );
+}
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut" as const,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut" as const,
+    },
+  },
+};
 
 export function DashboardOverview() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -79,9 +144,11 @@ export function DashboardOverview() {
           fetch("/api/groups?limit=1"),
         ]);
 
+        let fetchedMetrics: DashboardMetrics | null = null;
+
         if (metricsRes.ok) {
           const data = await metricsRes.json();
-          setMetrics(data);
+          fetchedMetrics = data;
         }
 
         if (groupsRes.ok) {
@@ -98,9 +165,17 @@ export function DashboardOverview() {
             setRecentTrades([]);
           }
         }
+
+        // Check if fetched data is effectively empty, if so use mock data
+        if (isDataEmpty(fetchedMetrics)) {
+          setMetrics(mockMetrics);
+          setRecentTrades(mockRecentTrades);
+          setGroupCount(2);
+        } else {
+          setMetrics(fetchedMetrics);
+        }
       } catch (error) {
         console.error("Failed to fetch dashboard data, using mock data:", error);
-        // Fallback to mock data when API is unavailable
         setMetrics(mockMetrics);
         setRecentTrades(mockRecentTrades);
         setGroupCount(2);
@@ -112,7 +187,7 @@ export function DashboardOverview() {
     fetchData();
   }, []);
 
-  // Use mock data if metrics are empty after loading
+  // Fallback: if after loading metrics is still null, use mock data
   useEffect(() => {
     if (!loading && !metrics) {
       setMetrics(mockMetrics);
@@ -124,7 +199,13 @@ export function DashboardOverview() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading dashboard...
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          Loading dashboard...
+        </motion.div>
       </div>
     );
   }
@@ -133,110 +214,163 @@ export function DashboardOverview() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Total PnL"
-          value={formatCurrency(m?.totalPnl || 0)}
-          trend={
-            (m?.totalPnl || 0) > 0
-              ? "up"
-              : (m?.totalPnl || 0) < 0
-                ? "down"
-                : "neutral"
-          }
-          icon={<DollarSign className="h-4 w-4" />}
-          href="/metrics"
-        />
-        <KpiCard
-          label="Active Accounts"
-          value={String(metrics?.activeAccountCount || 0)}
-          trend="neutral"
-          trendValue={`${metrics?.accountCount || 0} total`}
-          icon={<Wallet className="h-4 w-4" />}
-          href="/accounts"
-        />
-        <KpiCard
-          label="Active Groups"
-          value={String(groupCount)}
-          trend="neutral"
-          icon={<Users className="h-4 w-4" />}
-          href="/groups"
-        />
-        <KpiCard
-          label="Total Trades"
-          value={String(m?.totalTrades || 0)}
-          trend="neutral"
-          trendValue={`${((m?.winRate || 0) * 100).toFixed(0)}% win rate`}
-          icon={<Activity className="h-4 w-4" />}
-          href="/metrics"
-        />
-      </div>
+      {/* KPI Cards Grid with staggered entrance */}
+      <motion.div
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={itemVariants}>
+          <KpiCard
+            label="Total PnL"
+            value={formatCurrency(m?.totalPnl || 0)}
+            trend={
+              (m?.totalPnl || 0) > 0
+                ? "up"
+                : (m?.totalPnl || 0) < 0
+                  ? "down"
+                  : "neutral"
+            }
+            icon={<DollarSign className="h-4 w-4" />}
+            href="/metrics"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <KpiCard
+            label="Active Accounts"
+            value={String(metrics?.activeAccountCount || 0)}
+            trend="neutral"
+            trendValue={`${metrics?.accountCount || 0} total`}
+            icon={<Wallet className="h-4 w-4" />}
+            href="/accounts"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <KpiCard
+            label="Active Groups"
+            value={String(groupCount)}
+            trend="neutral"
+            icon={<Users className="h-4 w-4" />}
+            href="/groups"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <KpiCard
+            label="Total Trades"
+            value={String(m?.totalTrades || 0)}
+            trend="neutral"
+            trendValue={`${((m?.winRate || 0) * 100).toFixed(0)}% win rate`}
+            icon={<Activity className="h-4 w-4" />}
+            href="/metrics"
+          />
+        </motion.div>
+      </motion.div>
 
+      {/* Charts and Trades Section */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Equity Curve</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <EquityCurveChart data={m?.equityCurve || []} />
-          </CardContent>
-        </Card>
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+            <CardHeader className="relative">
+              <CardTitle>Equity Curve</CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <EquityCurveChart data={m?.equityCurve || []} />
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Trades</CardTitle>
-            <Link
-              href="/trades"
-              className="text-sm text-primary hover:underline"
-            >
-              View All
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {recentTrades.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-muted-foreground">
-                No recent trades. Start trading to see activity here.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left font-medium p-2">Symbol</th>
-                      <th className="text-left font-medium p-2">Side</th>
-                      <th className="text-right font-medium p-2">Qty</th>
-                      <th className="text-right font-medium p-2">PnL</th>
-                      <th className="text-center font-medium p-2">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentTrades.map((trade) => (
-                      <tr key={trade.id} className="border-b">
-                        <td className="p-2 font-medium">{trade.symbol}</td>
-                        <td className="p-2 capitalize">{trade.side}</td>
-                        <td className="p-2 text-right">{trade.quantity}</td>
-                        <td
-                          className={`p-2 text-right font-mono ${
-                            (trade.pnl || 0) >= 0
-                              ? "text-green-500"
-                              : "text-red-500"
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+            <CardHeader className="flex flex-row items-center justify-between relative">
+              <CardTitle>Recent Trades</CardTitle>
+              <Link
+                href="/trades"
+                className="text-sm text-primary hover:underline"
+              >
+                View All
+              </Link>
+            </CardHeader>
+            <CardContent className="relative">
+              {recentTrades.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  No recent trades. Start trading to see activity here.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left font-medium p-2 text-muted-foreground">Symbol</th>
+                        <th className="text-left font-medium p-2 text-muted-foreground">Side</th>
+                        <th className="text-right font-medium p-2 text-muted-foreground">Qty</th>
+                        <th className="text-right font-medium p-2 text-muted-foreground">PnL</th>
+                        <th className="text-center font-medium p-2 text-muted-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentTrades.map((trade, index) => (
+                        <motion.tr
+                          key={trade.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{
+                            duration: 0.4,
+                            delay: 0.5 + index * 0.08,
+                            ease: "easeOut",
+                          }}
+                          className={`border-b border-border/30 ${
+                            index % 2 === 1 ? "bg-muted/30" : ""
                           }`}
                         >
-                          {trade.pnl !== null
-                            ? formatCurrency(trade.pnl)
-                            : "-"}
-                        </td>
-                        <td className="p-2 text-center text-xs capitalize">
-                          {trade.status}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                          <td className="p-2 font-medium">{trade.symbol}</td>
+                          <td className="p-2 capitalize">{trade.side}</td>
+                          <td className="p-2 text-right">{trade.quantity}</td>
+                          <td
+                            className={`p-2 text-right font-mono ${
+                              (trade.pnl || 0) >= 0
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {trade.pnl !== null
+                              ? formatCurrency(trade.pnl)
+                              : "-"}
+                          </td>
+                          <td className="p-2 text-center">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                trade.status === "open"
+                                  ? "bg-blue-500/15 text-blue-500 border border-blue-500/30"
+                                  : trade.status === "closed"
+                                    ? "bg-green-500/15 text-green-500 border border-green-500/30"
+                                    : "bg-muted text-muted-foreground border border-border"
+                              }`}
+                            >
+                              {trade.status}
+                            </span>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

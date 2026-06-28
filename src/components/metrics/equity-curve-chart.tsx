@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 export interface EquityCurveData {
   date: string;
@@ -30,7 +31,12 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
   }
 
   return (
-    <div className="h-[300px] w-full">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
+      className="h-[300px] w-full"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
@@ -41,7 +47,12 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
               <stop
                 offset="5%"
                 stopColor="hsl(var(--primary))"
-                stopOpacity={0.3}
+                stopOpacity={0.5}
+              />
+              <stop
+                offset="50%"
+                stopColor="hsl(var(--primary))"
+                stopOpacity={0.15}
               />
               <stop
                 offset="95%"
@@ -75,9 +86,11 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
             stroke="hsl(var(--primary))"
             strokeWidth={2}
             fill="url(#equityGradient)"
+            animationBegin={300}
+            animationDuration={1500}
           />
         </AreaChart>
       </ResponsiveContainer>
-    </div>
+    </motion.div>
   );
 }

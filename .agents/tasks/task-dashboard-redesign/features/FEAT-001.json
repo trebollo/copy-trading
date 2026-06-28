@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix dashboard showing empty state by detecting empty/zero API responses and falling back to static mock data. Also redesign the entire dashboard with modern animations using framer-motion: glassmorphism cards, animated number counters, staggered entrance animations, hover micro-interactions, gradient accents, and smooth chart transitions.",
+  "status": "in_progress",
+  "steps": [
+    "Install framer-motion: run `pnpm add framer-motion`",
+    "Fix `src/components/dashboard/dashboard-overview.tsx`: After successful API fetch, check if data is effectively empty (totalTrades === 0, equityCurve empty, accountCount === 0). If so, use static mock data. Replace the `generateMockEquityCurve()` function with a hardcoded static array (no Math.random) to avoid hydration mismatches.",
+    "Redesign `src/components/dashboard/dashboard-overview.tsx` with framer-motion: add staggered entrance animations to the KPI grid (motion.div with variants and staggerChildren), animate the equity curve card and recent trades card with fade-in/slide-up on mount.",
+    "Redesign `src/components/metrics/kpi-card.tsx` with modern styling: glassmorphism effect (backdrop-blur, semi-transparent bg), subtle gradient border/accent on icon area, hover scale/shadow micro-interaction using framer-motion whileHover, and an animated number counter that counts up from 0 to the target value on mount (for numeric values).",
+    "Enhance `src/components/metrics/equity-curve-chart.tsx`: wrap in a motion.div for entrance animation, ensure the gradient fill looks modern with stronger opacity, add animationBegin prop to the Area for smooth draw-in on load.",
+    "Style the Recent Trades table: add alternating row colors (even:bg-muted/50), subtle slide-in animation for each row using framer-motion, and improved spacing/typography.",
+    "Ensure all changes work in both light and dark mode (use CSS variables from tailwind config). The glassmorphism should use backdrop-blur-xl and bg-card/80 or similar transparent card backgrounds.",
+    "Run `pnpm build` to verify no TypeScript or build errors."
+  ],
+  "acceptance_criteria": [
+    "Dashboard displays meaningful mock data when API returns empty/zero results (totalTrades=0, no accounts)",
+    "Mock data is fully static (no Math.random or Date-dependent values that could cause hydration mismatch)",
+    "framer-motion is installed and used for entrance animations on KPI cards (staggered), charts (fade-in), and trade rows (slide-in)",
+    "KPI cards have glassmorphism styling (backdrop-blur, semi-transparent background) and hover micro-interactions",
+    "Animated number counter on KPI values counts up from 0",
+    "Equity curve chart has smooth entrance animation",
+    "Recent trades table has alternating row colors and row entrance animations",
+    "pnpm build passes without errors"
+  ],
+  "verification": [
+    "Run `pnpm build` and confirm it completes successfully with exit code 0"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

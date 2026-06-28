@@ -1,0 +1,25 @@
+{
+  "project_type": "Next.js 14 App Router with TypeScript, Tailwind CSS, shadcn/ui, Prisma ORM",
+  "language": "TypeScript",
+  "build_system": "pnpm with next build",
+  "test_framework": "vitest with @testing-library/react",
+  "build_command": "pnpm build",
+  "test_command": "pnpm test",
+  "verification_instructions": "Run pnpm build to confirm no TypeScript/build errors. Run pnpm test to check tests pass.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "pnpm install to install deps. prisma generate for DB client.",
+  "environment_constraints": "No DB connection available for runtime testing. Build validation only.",
+  "contribution_requirements": "Commit all changes on feat/copy-trading-dashboard branch. Do NOT push.",
+  "key_patterns": "shadcn/ui Card components, lucide-react icons, Recharts for charts, cn() utility for class merging, 'use client' directive for client components, formatCurrency/formatDate from @/lib/utils",
+  "relevant_files": [
+    "src/components/dashboard/dashboard-overview.tsx",
+    "src/components/metrics/kpi-card.tsx",
+    "src/components/metrics/equity-curve-chart.tsx",
+    "src/app/dashboard/page.tsx",
+    "src/lib/utils.ts",
+    "src/components/ui/card.tsx",
+    "tailwind.config.ts",
+    "package.json"
+  ],
+  "directory_structure": "src/app/ - Next.js app router pages and API routes; src/components/ - React components organized by domain (dashboard, metrics, ui); src/lib/ - utilities, auth, prisma client, validations"
+}

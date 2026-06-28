@@ -1,0 +1,7 @@
+{
+  "task_id": "task-dashboard-redesign",
+  "task_description": "Fix dashboard empty state by falling back to static mock data when API returns empty/zero results. Redesign the dashboard with modern animations using framer-motion: glassmorphism cards, animated counters, staggered entrances, hover effects, gradient accents, and smooth chart transitions.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
