@@ -1,0 +1,29 @@
+{
+  "project_type": "Next.js 14 App Router full-stack application with mock data",
+  "language": "TypeScript",
+  "build_system": "pnpm with Next.js",
+  "test_framework": "Vitest with @testing-library/react",
+  "build_command": "pnpm build",
+  "test_command": "pnpm test",
+  "verification_instructions": "Run pnpm build to ensure TypeScript compiles and pages render. Run pnpm test for unit tests.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "pnpm install && pnpm build",
+  "environment_constraints": "All data is mock/local state. API calls fall back to hardcoded data. No real DB connection needed for features to work.",
+  "contribution_requirements": "All new features must work with hardcoded mock data. All clickable actions must do something visible (update local state, show toast, open dialog, etc.)",
+  "key_patterns": "Pages in src/app/*, components in src/components/<domain>/*. Uses shadcn/ui components, sonner for toasts, framer-motion for animations, recharts for charts. State is managed with useState hooks. Mock data is hardcoded in component files. Sidebar navigation in src/components/shared/sidebar.tsx.",
+  "relevant_files": [
+    "src/app/groups/page.tsx",
+    "src/components/groups/group-card.tsx",
+    "src/app/groups/[id]/page.tsx",
+    "src/app/accounts/page.tsx",
+    "src/app/accounts/[id]/page.tsx",
+    "src/app/settings/page.tsx",
+    "src/components/shared/header.tsx",
+    "src/components/shared/sidebar.tsx",
+    "src/app/metrics/page.tsx",
+    "src/components/metrics/metrics-dashboard.tsx",
+    "src/components/metrics/daily-pnl-chart.tsx",
+    "src/components/dashboard/dashboard-overview.tsx"
+  ],
+  "directory_structure": "src/app/ - pages (dashboard, accounts, groups, trades, metrics, settings). src/components/ - shared, dashboard, accounts, groups, metrics, trades, ui. src/lib/ - utilities, auth, prisma, trading types, validations."
+}

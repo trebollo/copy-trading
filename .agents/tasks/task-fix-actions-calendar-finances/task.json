@@ -1,0 +1,14 @@
+{
+  "task_id": "task-fix-actions-calendar-finances",
+  "task_description": "Fix all broken interactive actions (edit, sync, connect buttons), add PnL Calendar heatmap to metrics views, add Finances page for expenses/payouts tracking, and enhance Groups with daily PnL and more stats.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "pnpm build succeeds with all pages compiled (16/16 static pages). All 146 tests pass across 8 test files. All features verified: broken actions fixed, PnL Calendar added to metrics and account detail, Finances page created with CRUD, Groups enhanced with daily PnL and stats."
+  }
+}
