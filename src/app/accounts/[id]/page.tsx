@@ -116,7 +116,8 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
 export default function AccountDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [account, setAccount] = useState(sampleAccount);
+  const accountId = params.id as string;
+  const [account, setAccount] = useState({ ...sampleAccount, id: accountId || sampleAccount.id });
   const [trades] = useState<TradeRow[]>(sampleTrades);
   const [metrics] = useState<DailyMetricData[]>(sampleMetrics);
 

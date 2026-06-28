@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -144,6 +144,21 @@ const initialTransactions: Transaction[] = [
   },
 ];
 
+const STORAGE_KEY = "finances-transactions";
+
+function loadTransactions(): Transaction[] {
+  if (typeof window === "undefined") return initialTransactions;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved) as Transaction[];
+    }
+  } catch {
+    // Fallback to initial data
+  }
+  return initialTransactions;
+}
+
 export function FinancesPageContent() {
   const [transactions, setTransactions] =
     useState<Transaction[]>(initialTransactions);
@@ -151,6 +166,20 @@ export function FinancesPageContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    setTransactions(loadTransactions());
+  }, []);
+
+  // Persist to localStorage on every state change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+    } catch {
+      // Silently fail if localStorage is not available
+    }
+  }, [transactions]);
 
   const filteredTransactions = useMemo(() => {
     let filtered = [...transactions];

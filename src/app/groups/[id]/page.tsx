@@ -228,6 +228,18 @@ export default function GroupDetailPage() {
   const activeMembers = members.filter((m) => m.isActive).length;
   const inactiveMembers = members.filter((m) => !m.isActive).length;
 
+  // Derive stats from mock data
+  const totalPnl = groupDailyPnl.reduce((sum, d) => sum + d.pnl, 0);
+  const avgRiskMultiplier = members.length > 0
+    ? members.reduce((sum, m) => sum + m.riskMultiplier, 0) / members.length
+    : 0;
+  const winningDays = groupDailyPnl.filter((d) => d.pnl > 0).length;
+  const winRate = groupDailyPnl.length > 0
+    ? Math.round((winningDays / groupDailyPnl.length) * 100)
+    : 0;
+  // Trades today is static since there's no individual trades data
+  const tradesToday = 12;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -310,7 +322,7 @@ export default function GroupDetailPage() {
       </Card>
 
       {/* Group Summary */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -340,7 +352,7 @@ export default function GroupDetailPage() {
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <TrendingUp className="h-5 w-5 text-green-500" />
-                <p className="text-2xl font-bold text-green-500">{formatCurrency(3245.50)}</p>
+                <p className={`text-2xl font-bold ${totalPnl >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(totalPnl)}</p>
               </div>
               <p className="text-sm text-muted-foreground">Total PnL</p>
             </div>
@@ -351,7 +363,7 @@ export default function GroupDetailPage() {
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <BarChart3 className="h-5 w-5 text-blue-500" />
-                <p className="text-2xl font-bold">12</p>
+                <p className="text-2xl font-bold">{tradesToday}</p>
               </div>
               <p className="text-sm text-muted-foreground">Total Trades Today</p>
             </div>
@@ -362,22 +374,18 @@ export default function GroupDetailPage() {
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Target className="h-5 w-5 text-orange-500" />
-                <p className="text-2xl font-bold">1.0x</p>
+                <p className="text-2xl font-bold">{avgRiskMultiplier.toFixed(1)}x</p>
               </div>
               <p className="text-sm text-muted-foreground">Avg Risk Multiplier</p>
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Win Rate Card */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Percent className="h-5 w-5 text-purple-500" />
-                <p className="text-2xl font-bold">64%</p>
+                <p className="text-2xl font-bold">{winRate}%</p>
               </div>
               <p className="text-sm text-muted-foreground">Win Rate</p>
             </div>
@@ -393,15 +401,15 @@ export default function GroupDetailPage() {
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-3 mb-6">
             <div className="text-center rounded-lg border p-3">
-              <p className="text-lg font-bold text-green-500">{formatCurrency(185.50)}</p>
+              <p className={`text-lg font-bold ${groupDailyPnl[groupDailyPnl.length - 1]?.pnl >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(groupDailyPnl[groupDailyPnl.length - 1]?.pnl ?? 0)}</p>
               <p className="text-xs text-muted-foreground">Today&apos;s PnL</p>
             </div>
             <div className="text-center rounded-lg border p-3">
-              <p className="text-lg font-bold text-green-500">{formatCurrency(1061.50)}</p>
+              <p className={`text-lg font-bold ${groupDailyPnl.slice(-5).reduce((s, d) => s + d.pnl, 0) >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(groupDailyPnl.slice(-5).reduce((s, d) => s + d.pnl, 0))}</p>
               <p className="text-xs text-muted-foreground">This Week&apos;s PnL</p>
             </div>
             <div className="text-center rounded-lg border p-3">
-              <p className="text-lg font-bold text-green-500">{formatCurrency(3245.50)}</p>
+              <p className={`text-lg font-bold ${totalPnl >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(totalPnl)}</p>
               <p className="text-xs text-muted-foreground">This Month&apos;s PnL</p>
             </div>
           </div>

@@ -169,23 +169,29 @@ export default function SettingsPage() {
   };
 
   const handlePlatformToggle = (platformId: string) => {
-    setPlatforms((prev) =>
-      prev.map((p) => {
-        if (p.id === platformId) {
-          const newStatus = p.status === "connected" ? "disconnected" : "connected";
-          return {
-            ...p,
-            status: newStatus,
-            lastSync: newStatus === "connected" ? "Just now" : undefined,
-          };
-        }
-        return p;
-      })
-    );
     const platform = platforms.find((p) => p.id === platformId);
-    if (platform) {
-      const action = platform.status === "connected" ? "reconnected" : "connected";
-      toast.success(`${platform.name} ${action} successfully`);
+    if (!platform) return;
+
+    if (platform.status === "connected") {
+      // Already connected - "Reconnect" should keep it connected, just refresh sync
+      setPlatforms((prev) =>
+        prev.map((p) =>
+          p.id === platformId
+            ? { ...p, status: "connected" as const, lastSync: "Just now" }
+            : p
+        )
+      );
+      toast.success(`${platform.name} reconnected successfully`);
+    } else {
+      // Disconnected - "Connect" should connect it
+      setPlatforms((prev) =>
+        prev.map((p) =>
+          p.id === platformId
+            ? { ...p, status: "connected" as const, lastSync: "Just now" }
+            : p
+        )
+      );
+      toast.success(`${platform.name} connected successfully`);
     }
   };
 
