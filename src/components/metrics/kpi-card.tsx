@@ -19,9 +19,13 @@ interface KpiCardProps {
 function AnimatedNumber({ value }: { value: string }) {
   const [displayValue, setDisplayValue] = useState(value);
   const hasAnimated = useRef(false);
+  const frameIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (hasAnimated.current) return;
+    if (hasAnimated.current) {
+      setDisplayValue(value);
+      return;
+    }
 
     // Try to parse numeric value from the string (handles "$1,234.56" or "142")
     const cleaned = value.replace(/[^0-9.\-]/g, "");
@@ -42,8 +46,11 @@ function AnimatedNumber({ value }: { value: string }) {
 
     const duration = 1.5;
     const startTime = performance.now();
+    let cancelled = false;
 
     function tick() {
+      if (cancelled) return;
+
       const elapsed = (performance.now() - startTime) / 1000;
       const progress = Math.min(elapsed / duration, 1);
       // Ease out cubic
@@ -64,14 +71,22 @@ function AnimatedNumber({ value }: { value: string }) {
       setDisplayValue(`${sign}${prefix}${formatted}${suffix}`);
 
       if (progress < 1) {
-        requestAnimationFrame(tick);
+        frameIdRef.current = requestAnimationFrame(tick);
       } else {
         // Set final value exactly
         setDisplayValue(value);
       }
     }
 
-    requestAnimationFrame(tick);
+    frameIdRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      cancelled = true;
+      if (frameIdRef.current !== null) {
+        cancelAnimationFrame(frameIdRef.current);
+        frameIdRef.current = null;
+      }
+    };
   }, [value]);
 
   return <span>{displayValue}</span>;

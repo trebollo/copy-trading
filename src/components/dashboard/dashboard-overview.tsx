@@ -156,16 +156,6 @@ export function DashboardOverview() {
           setGroupCount(data.pagination?.total || 0);
         }
 
-        // Fetch recent trades from accounts
-        const accountsRes = await fetch("/api/accounts?limit=5");
-        if (accountsRes.ok) {
-          const accountsData = await accountsRes.json();
-          const accounts = accountsData.accounts || [];
-          if (accounts.length > 0) {
-            setRecentTrades([]);
-          }
-        }
-
         // Check if fetched data is effectively empty, if so use mock data
         if (isDataEmpty(fetchedMetrics)) {
           setMetrics(mockMetrics);
@@ -173,6 +163,17 @@ export function DashboardOverview() {
           setGroupCount(2);
         } else {
           setMetrics(fetchedMetrics);
+
+          // Fetch recent trades from accounts only when we have real data
+          const accountsRes = await fetch("/api/accounts?limit=5");
+          if (accountsRes.ok) {
+            const accountsData = await accountsRes.json();
+            const accounts = accountsData.accounts || [];
+            if (accounts.length > 0) {
+              // TODO: fetch real trades from accounts when trade endpoint is available
+              setRecentTrades([]);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to fetch dashboard data, using mock data:", error);
