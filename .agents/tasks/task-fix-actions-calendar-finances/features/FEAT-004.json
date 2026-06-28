@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Enhance the Groups section with daily PnL information and more stats on the group detail page, showing aggregated follower performance.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/app/groups/[id]/page.tsx: Add a 'Group Daily PnL' section with mock data showing the sum of all followers' PnL per day. Include a DailyPnlChart (reuse existing component) and a small stats summary (today's PnL, this week's PnL, this month's PnL).",
     "In src/app/groups/[id]/page.tsx: Enhance the Group Summary cards section. Add more stats: Total PnL (sum across all members), Average Risk Multiplier, Total Trades Today, Win Rate. Use mock data derived from the sample members.",
@@ -22,5 +22,5 @@
     "GroupCardData interface includes dailyPnl field"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes successfully with NODE_OPTIONS=\"\" npx next build. The pnpm build command has a preload module issue (proxy-bootstrap.js) but the underlying next build works fine. All three files modified: group detail page, groups list page, and group-card component."
 }
