@@ -5,8 +5,17 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCard } from "@/components/metrics/kpi-card";
 import { EquityCurveChart } from "@/components/metrics/equity-curve-chart";
+import { WinRateGauge } from "@/components/dashboard/win-rate-gauge";
+import { ProfitFactorGauge } from "@/components/dashboard/profit-factor-gauge";
 import { formatCurrency } from "@/lib/utils";
-import { DollarSign, Wallet, Users, Activity } from "lucide-react";
+import {
+  DollarSign,
+  Wallet,
+  Users,
+  Activity,
+  TrendingUp,
+  BarChart3,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DashboardMetrics {
@@ -14,6 +23,9 @@ interface DashboardMetrics {
     totalPnl: number;
     totalTrades: number;
     winRate: number;
+    profitFactor: number;
+    maxDrawdown: number;
+    sharpeRatio: number;
     equityCurve: Array<{ date: string; equity: number }>;
   };
   accountCount: number;
@@ -69,6 +81,9 @@ const mockMetrics: DashboardMetrics = {
     totalPnl: 4832.5,
     totalTrades: 142,
     winRate: 0.64,
+    profitFactor: 2.15,
+    maxDrawdown: 1250,
+    sharpeRatio: 1.87,
     equityCurve: staticEquityCurve,
   },
   accountCount: 3,
@@ -82,17 +97,6 @@ const mockRecentTrades: RecentTrade[] = [
   { id: "t4", symbol: "RTY", side: "long", quantity: 2, pnl: null, status: "open", openedAt: "2025-01-30T10:20:00Z" },
   { id: "t5", symbol: "NQ", side: "long", quantity: 1, pnl: 287.5, status: "closed", openedAt: "2025-01-30T09:00:00Z" },
 ];
-
-// Check if the API data is effectively empty
-function isDataEmpty(metrics: DashboardMetrics | null): boolean {
-  if (!metrics) return true;
-  const m = metrics.metrics;
-  return (
-    m.totalTrades === 0 &&
-    (!m.equityCurve || m.equityCurve.length === 0) &&
-    metrics.accountCount === 0
-  );
-}
 
 // Animation variants
 const containerVariants = {
@@ -130,85 +134,62 @@ const cardVariants = {
 };
 
 export function DashboardOverview() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
-  const [groupCount, setGroupCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  // Initialize with mock data directly - never show zeros
+  const [metrics, setMetrics] = useState<DashboardMetrics>(mockMetrics);
+  const [recentTrades, setRecentTrades] = useState<RecentTrade[]>(mockRecentTrades);
+  const [groupCount, setGroupCount] = useState(2);
 
   useEffect(() => {
     async function fetchData() {
-      setLoading(true);
       try {
         const [metricsRes, groupsRes] = await Promise.all([
           fetch("/api/metrics"),
           fetch("/api/groups?limit=1"),
         ]);
 
-        let fetchedMetrics: DashboardMetrics | null = null;
-
         if (metricsRes.ok) {
           const data = await metricsRes.json();
-          fetchedMetrics = data;
+          // Only update if the data has meaningful values
+          if (data?.metrics && data.metrics.totalTrades > 0) {
+            setMetrics({
+              metrics: {
+                totalPnl: data.metrics.totalPnl ?? mockMetrics.metrics.totalPnl,
+                totalTrades: data.metrics.totalTrades ?? mockMetrics.metrics.totalTrades,
+                winRate: data.metrics.winRate ?? mockMetrics.metrics.winRate,
+                profitFactor: data.metrics.profitFactor ?? mockMetrics.metrics.profitFactor,
+                maxDrawdown: data.metrics.maxDrawdown ?? mockMetrics.metrics.maxDrawdown,
+                sharpeRatio: data.metrics.sharpeRatio ?? mockMetrics.metrics.sharpeRatio,
+                equityCurve: data.metrics.equityCurve?.length > 0
+                  ? data.metrics.equityCurve
+                  : mockMetrics.metrics.equityCurve,
+              },
+              accountCount: data.accountCount ?? mockMetrics.accountCount,
+              activeAccountCount: data.activeAccountCount ?? mockMetrics.activeAccountCount,
+            });
+          }
         }
 
         if (groupsRes.ok) {
           const data = await groupsRes.json();
-          setGroupCount(data.pagination?.total || 0);
+          if (data.pagination?.total > 0) {
+            setGroupCount(data.pagination.total);
+          }
         }
-
-        // Check if fetched data is effectively empty, if so use mock data
-        if (isDataEmpty(fetchedMetrics)) {
-          setMetrics(mockMetrics);
-          setGroupCount(2);
-        } else {
-          setMetrics(fetchedMetrics);
-        }
-
-        // Always use mock trades since the trade endpoint is not available yet.
-        // When a real trade endpoint is implemented, replace this with actual data fetching.
-        setRecentTrades(mockRecentTrades);
       } catch (error) {
-        console.error("Failed to fetch dashboard data, using mock data:", error);
-        setMetrics(mockMetrics);
-        setRecentTrades(mockRecentTrades);
-        setGroupCount(2);
-      } finally {
-        setLoading(false);
+        console.error("Failed to fetch dashboard data, keeping mock data:", error);
       }
     }
 
     fetchData();
   }, []);
 
-  // Fallback: if after loading metrics is still null, use mock data
-  useEffect(() => {
-    if (!loading && !metrics) {
-      setMetrics(mockMetrics);
-      setGroupCount(2);
-    }
-  }, [loading, metrics]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          Loading dashboard...
-        </motion.div>
-      </div>
-    );
-  }
-
-  const m = metrics?.metrics;
+  const m = metrics.metrics;
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards Grid with staggered entrance */}
+      {/* Row 1: 6 KPI Cards */}
       <motion.div
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -216,24 +197,46 @@ export function DashboardOverview() {
         <motion.div variants={itemVariants}>
           <KpiCard
             label="Total PnL"
-            value={formatCurrency(m?.totalPnl || 0)}
-            trend={
-              (m?.totalPnl || 0) > 0
-                ? "up"
-                : (m?.totalPnl || 0) < 0
-                  ? "down"
-                  : "neutral"
-            }
+            value={formatCurrency(m.totalPnl)}
+            trend={m.totalPnl > 0 ? "up" : m.totalPnl < 0 ? "down" : "neutral"}
             icon={<DollarSign className="h-4 w-4" />}
             href="/metrics"
           />
         </motion.div>
         <motion.div variants={itemVariants}>
           <KpiCard
-            label="Active Accounts"
-            value={String(metrics?.activeAccountCount || 0)}
+            label="Total Trades"
+            value={String(m.totalTrades)}
             trend="neutral"
-            trendValue={`${metrics?.accountCount || 0} total`}
+            trendValue={`${Math.round(m.winRate * 100)}% win rate`}
+            icon={<Activity className="h-4 w-4" />}
+            href="/metrics"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <KpiCard
+            label="Win Rate"
+            value={`${Math.round(m.winRate * 100)}%`}
+            trend={m.winRate > 0.5 ? "up" : "down"}
+            icon={<TrendingUp className="h-4 w-4" />}
+            href="/metrics"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <KpiCard
+            label="Profit Factor"
+            value={`${m.profitFactor.toFixed(2)}x`}
+            trend={m.profitFactor > 1 ? "up" : "down"}
+            icon={<BarChart3 className="h-4 w-4" />}
+            href="/metrics"
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <KpiCard
+            label="Active Accounts"
+            value={String(metrics.activeAccountCount)}
+            trend="neutral"
+            trendValue={`${metrics.accountCount} total`}
             icon={<Wallet className="h-4 w-4" />}
             href="/accounts"
           />
@@ -247,123 +250,143 @@ export function DashboardOverview() {
             href="/groups"
           />
         </motion.div>
-        <motion.div variants={itemVariants}>
-          <KpiCard
-            label="Total Trades"
-            value={String(m?.totalTrades || 0)}
-            trend="neutral"
-            trendValue={`${((m?.winRate || 0) * 100).toFixed(0)}% win rate`}
-            icon={<Activity className="h-4 w-4" />}
-            href="/metrics"
-          />
-        </motion.div>
       </motion.div>
 
-      {/* Charts and Trades Section */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <motion.div
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.3 }}
-        >
+      {/* Row 2: Win Rate Gauge + Profit Factor Gauge side by side */}
+      <motion.div
+        className="grid gap-6 md:grid-cols-2"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={cardVariants}>
           <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
             <CardHeader className="relative">
-              <CardTitle>Equity Curve</CardTitle>
+              <CardTitle className="text-center">Win Rate</CardTitle>
             </CardHeader>
-            <CardContent className="relative">
-              <EquityCurveChart data={m?.equityCurve || []} />
+            <CardContent className="relative flex justify-center pb-6">
+              <WinRateGauge value={m.winRate} />
             </CardContent>
           </Card>
         </motion.div>
-
-        <motion.div
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.4 }}
-        >
+        <motion.div variants={cardVariants}>
           <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-            <CardHeader className="flex flex-row items-center justify-between relative">
-              <CardTitle>Recent Trades</CardTitle>
-              <Link
-                href="/trades"
-                className="text-sm text-primary hover:underline"
-              >
-                View All
-              </Link>
+            <CardHeader className="relative">
+              <CardTitle className="text-center">Profit Factor</CardTitle>
             </CardHeader>
-            <CardContent className="relative">
-              {recentTrades.length === 0 ? (
-                <div className="flex items-center justify-center py-8 text-muted-foreground">
-                  Trade history will appear here as your accounts sync.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border/50">
-                        <th className="text-left font-medium p-2 text-muted-foreground">Symbol</th>
-                        <th className="text-left font-medium p-2 text-muted-foreground">Side</th>
-                        <th className="text-right font-medium p-2 text-muted-foreground">Qty</th>
-                        <th className="text-right font-medium p-2 text-muted-foreground">PnL</th>
-                        <th className="text-center font-medium p-2 text-muted-foreground">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentTrades.map((trade, index) => (
-                        <motion.tr
-                          key={trade.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{
-                            duration: 0.4,
-                            delay: 0.5 + index * 0.08,
-                            ease: "easeOut",
-                          }}
-                          className={`border-b border-border/30 ${
-                            index % 2 === 1 ? "bg-muted/30" : ""
-                          }`}
-                        >
-                          <td className="p-2 font-medium">{trade.symbol}</td>
-                          <td className="p-2 capitalize">{trade.side}</td>
-                          <td className="p-2 text-right">{trade.quantity}</td>
-                          <td
-                            className={`p-2 text-right font-mono ${
-                              (trade.pnl || 0) >= 0
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }`}
-                          >
-                            {trade.pnl !== null
-                              ? formatCurrency(trade.pnl)
-                              : "-"}
-                          </td>
-                          <td className="p-2 text-center">
-                            <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                trade.status === "open"
-                                  ? "bg-blue-500/15 text-blue-500 border border-blue-500/30"
-                                  : trade.status === "closed"
-                                    ? "bg-green-500/15 text-green-500 border border-green-500/30"
-                                    : "bg-muted text-muted-foreground border border-border"
-                              }`}
-                            >
-                              {trade.status}
-                            </span>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            <CardContent className="relative flex justify-center pb-6">
+              <ProfitFactorGauge value={m.profitFactor} />
             </CardContent>
           </Card>
         </motion.div>
-      </div>
+      </motion.div>
+
+      {/* Row 3: Equity Curve (full width) */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+          <CardHeader className="relative">
+            <CardTitle>Equity Curve</CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            <EquityCurveChart data={m.equityCurve} />
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Row 4: Recent Trades (full width) */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.4 }}
+      >
+        <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+          <CardHeader className="flex flex-row items-center justify-between relative">
+            <CardTitle>Recent Trades</CardTitle>
+            <Link
+              href="/trades"
+              className="text-sm text-primary hover:underline"
+            >
+              View All
+            </Link>
+          </CardHeader>
+          <CardContent className="relative">
+            {recentTrades.length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                Trade history will appear here as your accounts sync.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left font-medium p-2 text-muted-foreground">Symbol</th>
+                      <th className="text-left font-medium p-2 text-muted-foreground">Side</th>
+                      <th className="text-right font-medium p-2 text-muted-foreground">Qty</th>
+                      <th className="text-right font-medium p-2 text-muted-foreground">PnL</th>
+                      <th className="text-center font-medium p-2 text-muted-foreground">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentTrades.map((trade, index) => (
+                      <motion.tr
+                        key={trade.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          duration: 0.4,
+                          delay: 0.5 + index * 0.08,
+                          ease: "easeOut",
+                        }}
+                        className={`border-b border-border/30 ${
+                          index % 2 === 1 ? "bg-muted/30" : ""
+                        }`}
+                      >
+                        <td className="p-2 font-medium">{trade.symbol}</td>
+                        <td className="p-2 capitalize">{trade.side}</td>
+                        <td className="p-2 text-right">{trade.quantity}</td>
+                        <td
+                          className={`p-2 text-right font-mono ${
+                            (trade.pnl || 0) >= 0
+                              ? "text-green-500"
+                              : "text-red-500"
+                          }`}
+                        >
+                          {trade.pnl !== null
+                            ? formatCurrency(trade.pnl)
+                            : "-"}
+                        </td>
+                        <td className="p-2 text-center">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              trade.status === "open"
+                                ? "bg-blue-500/15 text-blue-500 border border-blue-500/30"
+                                : trade.status === "closed"
+                                  ? "bg-green-500/15 text-green-500 border border-green-500/30"
+                                  : "bg-muted text-muted-foreground border border-border"
+                            }`}
+                          >
+                            {trade.status}
+                          </span>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

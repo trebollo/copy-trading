@@ -9,6 +9,31 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
+      // In DEMO_MODE, return mock data instead of 401
+      if (process.env.DEMO_MODE === "true") {
+        return NextResponse.json({
+          metrics: {
+            totalPnl: 4832.5,
+            totalTrades: 142,
+            winRate: 0.64,
+            profitFactor: 2.15,
+            maxDrawdown: 1250,
+            sharpeRatio: 1.87,
+            equityCurve: [
+              { date: "2025-01-01", equity: 50000.0 },
+              { date: "2025-01-05", equity: 50410.62 },
+              { date: "2025-01-10", equity: 51580.35 },
+              { date: "2025-01-15", equity: 52235.9 },
+              { date: "2025-01-20", equity: 52745.2 },
+              { date: "2025-01-25", equity: 53780.25 },
+              { date: "2025-01-30", equity: 54432.5 },
+            ],
+          },
+          accountCount: 3,
+          activeAccountCount: 2,
+        });
+      }
+
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

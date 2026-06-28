@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Fix the metrics data flow and add gauge charts for Win Rate and Profit Factor to the dashboard. The API route must return mock data in DEMO_MODE when there is no session. The dashboard must initialize with mock data (never show zeros). Add two new gauge chart components using recharts RadialBarChart.",
+  "status": "in_progress",
+  "steps": [
+    "1. Fix src/app/api/metrics/route.ts: When session is null AND process.env.DEMO_MODE === 'true', return mock data (totalPnl: 4832.5, totalTrades: 142, winRate: 0.64, profitFactor: 2.15, maxDrawdown: 1250, sharpeRatio: 1.87) with accountCount: 3 and activeAccountCount: 2 instead of returning 401. Keep the existing authenticated flow for real users.",
+    "2. Create src/components/dashboard/win-rate-gauge.tsx: A radial/semi-circular gauge using recharts RadialBarChart showing win rate as a percentage. Color coding: green (>60%), yellow (40-60%), red (<40%). Animated fill on mount using framer-motion. Should accept a 'value' prop (0-1 range). Display percentage in center.",
+    "3. Create src/components/dashboard/profit-factor-gauge.tsx: Similar gauge component for profit factor. Accepts 'value' prop (number like 2.15). Color coding: green (>1.5), yellow (1.0-1.5), red (<1.0). Show the value as 'X.XXx' in center.",
+    "4. Rewrite src/components/dashboard/dashboard-overview.tsx: Initialize useState with mockMetrics directly (not null), never show zeros during loading. Add profitFactor, maxDrawdown, sharpeRatio to the DashboardMetrics interface. Layout should be: Row 1 - 6 KPI cards (PnL, Trades, Win Rate, Profit Factor, Active Accounts, Active Groups). Row 2 - Win Rate Gauge + Profit Factor Gauge (side by side in 2-column grid). Row 3 - Equity Curve (full width). Row 4 - Recent Trades table. If API returns good data, replace mock data; otherwise keep mock data showing.",
+    "5. Verify the build succeeds with: cd /projects/sandbox/copy-trading && NODE_OPTIONS='' pnpm build"
+  ],
+  "acceptance_criteria": [
+    "pnpm build completes without errors",
+    "The API route at /api/metrics returns mock data with 200 status when DEMO_MODE=true and no session exists",
+    "win-rate-gauge.tsx component exists and renders a radial gauge with recharts",
+    "profit-factor-gauge.tsx component exists and renders a radial gauge with recharts",
+    "dashboard-overview.tsx initializes state with mock data (never null), shows 6 KPI cards, 2 gauge charts, equity curve, and recent trades",
+    "Win rate gauge shows 64% with green color",
+    "Profit factor gauge shows 2.15x with green color"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && NODE_OPTIONS='' pnpm build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

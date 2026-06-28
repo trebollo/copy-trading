@@ -1,0 +1,24 @@
+{
+  "project_type": "Next.js 14 app with App Router, shadcn/ui, recharts, framer-motion",
+  "language": "TypeScript",
+  "build_system": "pnpm, Next.js",
+  "test_framework": "vitest with @testing-library/react",
+  "build_command": "cd /projects/sandbox/copy-trading && NODE_OPTIONS='' pnpm build",
+  "test_command": "cd /projects/sandbox/copy-trading && NODE_OPTIONS='' pnpm test",
+  "verification_instructions": "Run pnpm build with NODE_OPTIONS='' to verify no TypeScript/build errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "pnpm install (already done)",
+  "environment_constraints": "NODE_OPTIONS must be cleared before running pnpm build/test due to sandbox proxy-bootstrap issue. No database available. DEMO_MODE=true on Vercel.",
+  "contribution_requirements": "Commit changes, do NOT push",
+  "key_patterns": "Components in src/components/ using 'use client' directive. UI components from shadcn/ui in src/components/ui/. Metrics components in src/components/metrics/. API routes in src/app/api/. framer-motion for animations. recharts for all charts (AreaChart, LineChart, RadialBarChart available).",
+  "relevant_files": [
+    "src/components/dashboard/dashboard-overview.tsx",
+    "src/app/api/metrics/route.ts",
+    "src/components/metrics/kpi-card.tsx",
+    "src/components/metrics/equity-curve-chart.tsx",
+    "src/components/metrics/win-rate-chart.tsx",
+    "src/components/metrics/profit-factor-chart.tsx",
+    "src/lib/auth.ts"
+  ],
+  "directory_structure": "src/app/ (Next.js app router pages/api), src/components/dashboard/ (dashboard page components), src/components/metrics/ (metric visualization components), src/components/ui/ (shadcn/ui base components), src/lib/ (utilities, auth, prisma)"
+}

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-gauge-charts-fix-metrics",
+  "task_description": "Fix dashboard showing zeros by fixing API route to return mock data in DEMO_MODE, and add gauge charts for Win Rate and Profit Factor",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
