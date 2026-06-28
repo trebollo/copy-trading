@@ -20,6 +20,7 @@ import {
 } from "@/components/accounts/account-pnl-chart";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { TradingPlatform } from "@/lib/trading/types";
+import { PnlCalendar } from "@/components/metrics/pnl-calendar";
 
 // Sample data for initial render (will be replaced by API calls)
 const sampleTrades: TradeRow[] = [
@@ -239,6 +240,16 @@ export default function AccountDetailPage() {
         </CardHeader>
         <CardContent>
           <AccountPnlChart data={metrics} />
+        </CardContent>
+      </Card>
+
+      {/* PnL Calendar */}
+      <Card>
+        <CardHeader>
+          <CardTitle>PnL Calendar</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PnlCalendar data={metrics} />
         </CardContent>
       </Card>
 

@@ -8,6 +8,7 @@ import { EquityCurveChart } from "@/components/metrics/equity-curve-chart";
 import { DailyPnlChart } from "@/components/metrics/daily-pnl-chart";
 import { ProfitFactorChart } from "@/components/metrics/profit-factor-chart";
 import { WinRateChart } from "@/components/metrics/win-rate-chart";
+import { PnlCalendar } from "@/components/metrics/pnl-calendar";
 import { SessionMetrics } from "@/components/metrics/session-metrics";
 import {
   AccountComparisonTable,
@@ -245,6 +246,33 @@ export function MetricsDashboard() {
     });
   }, []);
 
+  const calendarData = useMemo(() => {
+    const pnlValues = [
+      150, -75, 300, 200, -50, 0, 0,
+      425, -125, 350, 175, -200, 0, 0,
+      500, -80, 220, 310, -150, 0, 0,
+      180, -60, 400, 275, -100, 0, 0,
+      350, -90,
+    ];
+    const tradeValues = [
+      3, 2, 5, 4, 2, 0, 0,
+      6, 3, 4, 3, 4, 0, 0,
+      5, 2, 3, 5, 3, 0, 0,
+      4, 2, 6, 4, 3, 0, 0,
+      5, 2,
+    ];
+    const data: Array<{ date: string; pnl: number; trades: number }> = [];
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(2024, 0, i + 1); // January 2024
+      data.push({
+        date: date.toISOString().split("T")[0],
+        pnl: pnlValues[i],
+        trades: tradeValues[i],
+      });
+    }
+    return data;
+  }, []);
+
   return (
     <div className="space-y-6">
       <DateRangePicker value={dateRange} onChange={setDateRange} />
@@ -363,6 +391,15 @@ export function MetricsDashboard() {
                   </CardContent>
                 </Card>
               </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>PnL Calendar</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PnlCalendar data={calendarData} />
+                </CardContent>
+              </Card>
             </>
           )}
         </TabsContent>
