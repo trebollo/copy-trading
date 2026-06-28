@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCard } from "@/components/metrics/kpi-card";
 import { EquityCurveChart } from "@/components/metrics/equity-curve-chart";
@@ -182,8 +183,14 @@ export function DashboardOverview() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Trades</CardTitle>
+            <Link
+              href="/trades"
+              className="text-sm text-primary hover:underline"
+            >
+              View All
+            </Link>
           </CardHeader>
           <CardContent>
             {recentTrades.length === 0 ? (

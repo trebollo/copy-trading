@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCard } from "@/components/metrics/kpi-card";
 import { EquityCurveChart } from "@/components/metrics/equity-curve-chart";
 import { DailyPnlChart } from "@/components/metrics/daily-pnl-chart";
+import { ProfitFactorChart } from "@/components/metrics/profit-factor-chart";
+import { WinRateChart } from "@/components/metrics/win-rate-chart";
+import { SessionMetrics } from "@/components/metrics/session-metrics";
 import {
   AccountComparisonTable,
   AccountMetricRow,
@@ -207,6 +210,41 @@ export function MetricsDashboard() {
           : point.equity - (m.equityCurve[i - 1]?.equity || 0),
     })) || [];
 
+  // Generate mock time-series data for profit factor and win rate
+  const profitFactorData = useMemo(() => {
+    const data: Array<{ date: string; profitFactor: number }> = [];
+    const now = new Date();
+    let pf = 1.8;
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      pf += (Math.random() - 0.45) * 0.3;
+      pf = Math.max(1.0, Math.min(3.0, pf));
+      data.push({
+        date: date.toISOString().split("T")[0],
+        profitFactor: Math.round(pf * 100) / 100,
+      });
+    }
+    return data;
+  }, []);
+
+  const winRateData = useMemo(() => {
+    const data: Array<{ date: string; winRate: number }> = [];
+    const now = new Date();
+    let wr = 0.6;
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      wr += (Math.random() - 0.45) * 0.05;
+      wr = Math.max(0.4, Math.min(0.8, wr));
+      data.push({
+        date: date.toISOString().split("T")[0],
+        winRate: Math.round(wr * 1000) / 1000,
+      });
+    }
+    return data;
+  }, []);
+
   return (
     <div className="space-y-6">
       <DateRangePicker value={dateRange} onChange={setDateRange} />
@@ -215,6 +253,7 @@ export function MetricsDashboard() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="by-account">By Account</TabsTrigger>
+          <TabsTrigger value="sessions">Sessions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-4">
@@ -304,6 +343,26 @@ export function MetricsDashboard() {
                   </CardContent>
                 </Card>
               </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Profit Factor Over Time</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ProfitFactorChart data={profitFactorData} />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Win Rate Over Time</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <WinRateChart data={winRateData} />
+                  </CardContent>
+                </Card>
+              </div>
             </>
           )}
         </TabsContent>
@@ -317,6 +376,10 @@ export function MetricsDashboard() {
               <AccountComparisonTable accounts={accountMetrics} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="sessions" className="space-y-6 mt-4">
+          <SessionMetrics />
         </TabsContent>
       </Tabs>
     </div>
