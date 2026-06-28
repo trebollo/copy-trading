@@ -9,8 +9,6 @@ import {
   addMonths,
   subMonths,
   getDay,
-  isSameMonth,
-  isSameDay,
   parseISO,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -42,17 +40,15 @@ function getPnlColor(pnl: number, maxAbsPnl: number): string {
   }
 }
 
-const DAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Week Total"];
 
 export function PnlCalendar({ data }: PnlCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(() => {
-    // Default to the month of the first data point, or now
     if (data.length > 0) {
       return startOfMonth(parseISO(data[0].date));
     }
     return startOfMonth(new Date());
   });
-  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
 
   const dataMap = useMemo(() => {
     const map = new Map<string, PnlCalendarData>();
@@ -74,6 +70,25 @@ export function PnlCalendar({ data }: PnlCalendarProps) {
   // getDay returns 0=Sunday, 1=Monday... We want Monday=0
   const startDayOfWeek = (getDay(monthStart) + 6) % 7;
 
+  // Build weeks: each week is an array of 7 slots (some may be null for padding)
+  const weeks: Array<Array<Date | null>> = [];
+  let currentWeek: Array<Date | null> = Array.from({ length: startDayOfWeek }, () => null);
+
+  for (const day of daysInMonth) {
+    currentWeek.push(day);
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  }
+  // Fill the last week with nulls if incomplete
+  if (currentWeek.length > 0) {
+    while (currentWeek.length < 7) {
+      currentWeek.push(null);
+    }
+    weeks.push(currentWeek);
+  }
+
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
@@ -93,7 +108,7 @@ export function PnlCalendar({ data }: PnlCalendarProps) {
       </div>
 
       {/* Day headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      <div className="grid grid-cols-8 gap-1 mb-1">
         {DAY_HEADERS.map((day) => (
           <div
             key={day}
@@ -104,55 +119,87 @@ export function PnlCalendar({ data }: PnlCalendarProps) {
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {/* Empty cells for offset */}
-        {Array.from({ length: startDayOfWeek }).map((_, i) => (
-          <div key={`empty-${i}`} className="aspect-square" />
-        ))}
+      {/* Calendar grid - row by row with weekly totals */}
+      {weeks.map((week, weekIdx) => {
+        // Calculate weekly totals
+        let weekPnl = 0;
+        let weekTrades = 0;
+        for (const day of week) {
+          if (day) {
+            const dateStr = format(day, "yyyy-MM-dd");
+            const dayData = dataMap.get(dateStr);
+            if (dayData) {
+              weekPnl += dayData.pnl;
+              weekTrades += dayData.trades;
+            }
+          }
+        }
 
-        {/* Day cells */}
-        {daysInMonth.map((day) => {
-          const dateStr = format(day, "yyyy-MM-dd");
-          const dayData = dataMap.get(dateStr);
-          const colorClass = dayData
-            ? getPnlColor(dayData.pnl, maxAbsPnl)
-            : "bg-muted/50";
-          const isHovered = hoveredDay === dateStr;
+        return (
+          <div key={weekIdx} className="grid grid-cols-8 gap-1 mb-1">
+            {/* Day cells */}
+            {week.map((day, dayIdx) => {
+              if (!day) {
+                return <div key={`empty-${weekIdx}-${dayIdx}`} className="min-h-[4rem]" />;
+              }
 
-          return (
-            <div
-              key={dateStr}
-              className="relative"
-              onMouseEnter={() => setHoveredDay(dateStr)}
-              onMouseLeave={() => setHoveredDay(null)}
-            >
-              <div
-                className={`aspect-square rounded-sm flex items-center justify-center text-xs font-medium cursor-default transition-transform ${colorClass} ${
-                  isHovered ? "ring-2 ring-primary scale-110 z-10" : ""
-                } ${dayData && dayData.pnl > 0 ? "text-green-950 dark:text-green-100" : ""} ${dayData && dayData.pnl < 0 ? "text-red-950 dark:text-red-100" : "text-muted-foreground"}`}
-              >
-                {format(day, "d")}
-              </div>
+              const dateStr = format(day, "yyyy-MM-dd");
+              const dayData = dataMap.get(dateStr);
+              const colorClass = dayData
+                ? getPnlColor(dayData.pnl, maxAbsPnl)
+                : "bg-muted/50";
 
-              {/* Tooltip */}
-              {isHovered && dayData && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
-                  <div className="bg-popover border border-border rounded-md shadow-md px-3 py-2 text-xs whitespace-nowrap">
-                    <p className="font-semibold">{format(day, "MMM d, yyyy")}</p>
-                    <p className={dayData.pnl >= 0 ? "text-green-600" : "text-red-600"}>
-                      PnL: {formatCurrency(dayData.pnl)}
-                    </p>
-                    <p className="text-muted-foreground">
-                      Trades: {dayData.trades}
-                    </p>
-                  </div>
+              return (
+                <div
+                  key={dateStr}
+                  className={`min-h-[4rem] rounded-sm flex flex-col justify-between p-1 text-xs cursor-default transition-transform ${colorClass} ${dayData && dayData.pnl > 0 ? "text-green-950 dark:text-green-100" : ""} ${dayData && dayData.pnl < 0 ? "text-red-950 dark:text-red-100" : "text-muted-foreground"}`}
+                >
+                  {/* Day number - top left */}
+                  <span className="text-[10px] leading-none font-medium">
+                    {format(day, "d")}
+                  </span>
+                  {/* PnL - center */}
+                  {dayData && dayData.pnl !== 0 ? (
+                    <span className="text-[11px] font-semibold text-center leading-tight">
+                      {formatCurrency(dayData.pnl)}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-center leading-tight">&nbsp;</span>
+                  )}
+                  {/* Trade count - bottom */}
+                  {dayData && dayData.trades > 0 ? (
+                    <span className="text-[10px] text-center leading-none opacity-75">
+                      {dayData.trades} trade{dayData.trades !== 1 ? "s" : ""}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-center leading-none">&nbsp;</span>
+                  )}
                 </div>
+              );
+            })}
+
+            {/* Weekly total cell */}
+            <div
+              className={`min-h-[4rem] rounded-sm flex flex-col items-center justify-center p-1 text-xs border ${
+                weekPnl > 0
+                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700"
+                  : weekPnl < 0
+                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700"
+                    : "bg-muted/50 text-muted-foreground border-border"
+              }`}
+            >
+              <span className="text-[11px] font-bold leading-tight">
+                {formatCurrency(weekPnl)}
+              </span>
+              {weekTrades > 0 && (
+                <span className="text-[10px] leading-none mt-1 opacity-75">
+                  {weekTrades} trades
+                </span>
               )}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">

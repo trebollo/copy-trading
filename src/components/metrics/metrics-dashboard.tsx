@@ -45,25 +45,42 @@ interface MetricsResponse {
   activeAccountCount: number;
 }
 
-function generateMockEquityCurve(): Array<{ date: string; equity: number }> {
-  const data: Array<{ date: string; equity: number }> = [];
-  let equity = 50000;
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    equity += (Math.random() - 0.4) * 800;
-    data.push({
-      date: date.toISOString().split("T")[0],
-      equity: Math.round(equity * 100) / 100,
-    });
-  }
-  return data;
-}
+const staticEquityCurve: Array<{ date: string; equity: number }> = [
+  { date: "2025-01-01", equity: 50000 },
+  { date: "2025-01-02", equity: 50320 },
+  { date: "2025-01-03", equity: 50185 },
+  { date: "2025-01-04", equity: 50542 },
+  { date: "2025-01-05", equity: 50410 },
+  { date: "2025-01-06", equity: 50875 },
+  { date: "2025-01-07", equity: 51032 },
+  { date: "2025-01-08", equity: 50890 },
+  { date: "2025-01-09", equity: 51245 },
+  { date: "2025-01-10", equity: 51580 },
+  { date: "2025-01-11", equity: 51420 },
+  { date: "2025-01-12", equity: 51795 },
+  { date: "2025-01-13", equity: 52010 },
+  { date: "2025-01-14", equity: 51860 },
+  { date: "2025-01-15", equity: 52235 },
+  { date: "2025-01-16", equity: 52480 },
+  { date: "2025-01-17", equity: 52310 },
+  { date: "2025-01-18", equity: 52675 },
+  { date: "2025-01-19", equity: 52890 },
+  { date: "2025-01-20", equity: 52745 },
+  { date: "2025-01-21", equity: 53120 },
+  { date: "2025-01-22", equity: 53350 },
+  { date: "2025-01-23", equity: 53180 },
+  { date: "2025-01-24", equity: 53545 },
+  { date: "2025-01-25", equity: 53780 },
+  { date: "2025-01-26", equity: 53620 },
+  { date: "2025-01-27", equity: 53985 },
+  { date: "2025-01-28", equity: 54210 },
+  { date: "2025-01-29", equity: 54050 },
+  { date: "2025-01-30", equity: 54432.50 },
+];
 
 const mockMetricsData: MetricsResponse = {
   metrics: {
-    totalPnl: 4832.5,
+    totalPnl: 4432.50,
     totalTrades: 142,
     winRate: 0.64,
     profitFactor: 2.15,
@@ -73,7 +90,7 @@ const mockMetricsData: MetricsResponse = {
     averageLoss: -145.3,
     bestDay: 1875.0,
     worstDay: -625.0,
-    equityCurve: generateMockEquityCurve(),
+    equityCurve: staticEquityCurve,
   },
   accountCount: 3,
   activeAccountCount: 2,

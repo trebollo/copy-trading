@@ -98,7 +98,7 @@ export function TradesPageContent() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("openedAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   const filteredAndSortedTrades = useMemo(() => {

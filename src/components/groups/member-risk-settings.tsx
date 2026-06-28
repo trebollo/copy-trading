@@ -23,6 +23,7 @@ export interface MemberRiskData {
   maxDailyLoss: number;
   maxDailyProfit: number;
   isActive: boolean;
+  isMaster?: boolean;
 }
 
 interface MemberRiskSettingsProps {

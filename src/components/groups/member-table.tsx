@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X, Pencil, Trash2 } from "lucide-react";
+import { Check, X, Pencil, Trash2, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,43 @@ function MemberTableRow({
   const handleToggleActive = () => {
     onSave(member.id, { isActive: !member.isActive });
   };
+
+  // Master account row - no editing, no toggle, no actions
+  if (member.isMaster) {
+    return (
+      <tr className="border-b text-sm bg-amber-50/50 dark:bg-amber-950/10">
+        <td className="px-3 py-2 font-medium whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <Crown className="h-4 w-4 text-amber-500" />
+            {member.accountName}
+            <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:text-amber-400">
+              Master
+            </Badge>
+          </div>
+        </td>
+        <td className="px-3 py-2 whitespace-nowrap">
+          <Badge variant="outline" className="text-xs">
+            {member.accountPlatform}
+          </Badge>
+        </td>
+        <td className="px-3 py-2">
+          <Badge variant="default" className="text-xs">Active</Badge>
+        </td>
+        <td className="px-3 py-2 whitespace-nowrap">
+          <span>1.0x</span>
+        </td>
+        <td className="px-3 py-2 whitespace-nowrap">
+          <span>-</span>
+        </td>
+        <td className="px-3 py-2 whitespace-nowrap">
+          <span>-</span>
+        </td>
+        <td className="px-3 py-2 whitespace-nowrap">
+          {/* No actions for master */}
+        </td>
+      </tr>
+    );
+  }
 
   return (
     <tr className={`border-b text-sm ${!member.isActive ? "opacity-50" : ""}`}>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Crown, Settings, Plus, Check, X, TrendingUp, BarChart3, Target, Percent } from "lucide-react";
+import { ArrowLeft, Settings, Plus, Check, X, TrendingUp, BarChart3, Target, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -284,43 +284,6 @@ export default function GroupDetailPage() {
         </div>
       </div>
 
-      {/* Master Account */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Crown className="h-4 w-4 text-amber-500" />
-            Master Account
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="font-semibold">
-                {group.masterAccount.name}
-              </span>
-              <Badge variant="outline">
-                {platformLabels[group.masterAccount.platform] ||
-                  group.masterAccount.platform}
-              </Badge>
-              <Badge
-                variant={
-                  group.masterAccount.status === "active"
-                    ? "default"
-                    : "secondary"
-                }
-              >
-                {group.masterAccount.status}
-              </Badge>
-            </div>
-            <Link href={`/accounts/${group.masterAccount.id}`}>
-              <Button variant="link" size="sm">
-                View Account
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Group Summary */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -417,36 +380,36 @@ export default function GroupDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Followers */}
+      {/* Members (Master + Followers) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
-            Follower Accounts ({members.length})
+            Members ({members.length + 1})
           </h3>
           <Button size="sm" variant="outline" onClick={() => setAddMemberDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Account
           </Button>
         </div>
-        {members.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                No follower accounts. Add accounts to start copying trades.
-              </p>
-              <Button className="mt-4" size="sm" onClick={() => setAddMemberDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Account
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <MemberTable
-            members={members}
-            onSave={handleSaveMember}
-            onRemove={handleRemoveMember}
-          />
-        )}
+        <MemberTable
+          members={[
+            {
+              id: `master-${group.masterAccount.id}`,
+              accountId: group.masterAccount.id,
+              accountName: group.masterAccount.name,
+              accountPlatform: platformLabels[group.masterAccount.platform] || group.masterAccount.platform,
+              riskMultiplier: 1.0,
+              maxLots: 0,
+              maxDailyLoss: 0,
+              maxDailyProfit: 0,
+              isActive: true,
+              isMaster: true,
+            },
+            ...members,
+          ]}
+          onSave={handleSaveMember}
+          onRemove={handleRemoveMember}
+        />
       </div>
 
       {/* Activity Feed */}
