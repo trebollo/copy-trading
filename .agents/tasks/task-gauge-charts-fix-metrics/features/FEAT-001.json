@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Fix the metrics data flow and add gauge charts for Win Rate and Profit Factor to the dashboard. The API route must return mock data in DEMO_MODE when there is no session. The dashboard must initialize with mock data (never show zeros). Add two new gauge chart components using recharts RadialBarChart.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix src/app/api/metrics/route.ts: When session is null AND process.env.DEMO_MODE === 'true', return mock data (totalPnl: 4832.5, totalTrades: 142, winRate: 0.64, profitFactor: 2.15, maxDrawdown: 1250, sharpeRatio: 1.87) with accountCount: 3 and activeAccountCount: 2 instead of returning 401. Keep the existing authenticated flow for real users.",
     "2. Create src/components/dashboard/win-rate-gauge.tsx: A radial/semi-circular gauge using recharts RadialBarChart showing win rate as a percentage. Color coding: green (>60%), yellow (40-60%), red (<40%). Animated fill on mount using framer-motion. Should accept a 'value' prop (0-1 range). Display percentage in center.",
@@ -23,5 +23,5 @@
     "cd /projects/sandbox/copy-trading && NODE_OPTIONS='' pnpm build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly. The Next.js dynamic server usage warnings for /api/metrics and /api/settings are expected because they use headers (via getServerSession). The dashboard page is statically pre-rendered as intended."
 }
