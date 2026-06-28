@@ -159,22 +159,14 @@ export function DashboardOverview() {
         // Check if fetched data is effectively empty, if so use mock data
         if (isDataEmpty(fetchedMetrics)) {
           setMetrics(mockMetrics);
-          setRecentTrades(mockRecentTrades);
           setGroupCount(2);
         } else {
           setMetrics(fetchedMetrics);
-
-          // Fetch recent trades from accounts only when we have real data
-          const accountsRes = await fetch("/api/accounts?limit=5");
-          if (accountsRes.ok) {
-            const accountsData = await accountsRes.json();
-            const accounts = accountsData.accounts || [];
-            if (accounts.length > 0) {
-              // TODO: fetch real trades from accounts when trade endpoint is available
-              setRecentTrades([]);
-            }
-          }
         }
+
+        // Always use mock trades since the trade endpoint is not available yet.
+        // When a real trade endpoint is implemented, replace this with actual data fetching.
+        setRecentTrades(mockRecentTrades);
       } catch (error) {
         console.error("Failed to fetch dashboard data, using mock data:", error);
         setMetrics(mockMetrics);
@@ -192,7 +184,6 @@ export function DashboardOverview() {
   useEffect(() => {
     if (!loading && !metrics) {
       setMetrics(mockMetrics);
-      setRecentTrades(mockRecentTrades);
       setGroupCount(2);
     }
   }, [loading, metrics]);
@@ -307,7 +298,7 @@ export function DashboardOverview() {
             <CardContent className="relative">
               {recentTrades.length === 0 ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
-                  No recent trades. Start trading to see activity here.
+                  Trade history will appear here as your accounts sync.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
