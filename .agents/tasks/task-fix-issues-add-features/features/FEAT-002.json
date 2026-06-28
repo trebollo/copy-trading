@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Add a dedicated /trades page with full trades list, pagination, filtering, and sorting. Also enhance metrics with profit factor chart, win rate chart over time, and session-based breakdown (Asian, London, NY).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create src/app/trades/layout.tsx wrapping with AppShell (follow pattern from src/app/metrics/layout.tsx).",
     "2. Create src/app/trades/page.tsx as a server component with metadata, rendering a TradesPage client component.",
@@ -26,5 +26,5 @@
     "Run pnpm build and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly (pnpm build via npx next build with unset NODE_OPTIONS due to sandbox env). NODE_OPTIONS must be unset to avoid proxy-bootstrap.js error. Pre-existing warnings exist in other files (unused vars in accounts, groups, trading libs) but no errors. The /trades route renders as a static page. All 9 steps implemented successfully."
 }
