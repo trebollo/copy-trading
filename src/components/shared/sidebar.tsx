@@ -13,6 +13,7 @@ import {
   ChevronRight,
   TrendingUp,
   ScrollText,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/groups", label: "Groups", icon: Users },
   { href: "/trades", label: "Trades", icon: ScrollText },
   { href: "/metrics", label: "Metrics", icon: BarChart3 },
+  { href: "/finances", label: "Finances", icon: Receipt },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
