@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add a Finances (Expenses & Payouts) page with full CRUD for tracking expenses and payouts, monthly breakdown, and summary stats. Add navigation link in the sidebar.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/app/finances/page.tsx: A new page with metadata title 'Finances | CopyTrader'. Contains the FinancesPageContent component.",
     "Create src/components/finances/finances-page.tsx: Main component with: (1) Summary cards at top showing Total Expenses, Total Payouts, Net Profit. (2) An 'Add Transaction' button that opens a dialog. (3) A table of transactions with columns: Date, Description, Amount, Type (expense/payout), Category. (4) Filters for type (all/expense/payout) and date range. (5) Monthly breakdown section showing a bar chart or table grouped by month.",
@@ -30,5 +30,5 @@
     "Sidebar contains '/finances' link"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes successfully. The /finances route is generated as a static page. All UI components (Dialog, Select, DropdownMenu, Badge) from shadcn/ui were available and used. The NODE_OPTIONS env var causes issues; use `unset NODE_OPTIONS` before running pnpm build."
 }
