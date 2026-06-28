@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "pnpm build succeeds with all pages compiled (16/16 static pages). All 146 tests pass across 8 test files. All features verified: broken actions fixed, PnL Calendar added to metrics and account detail, Finances page created with CRUD, Groups enhanced with daily PnL and stats."
+    "summary": "pnpm build succeeds with all pages compiled (16/16 static pages). All 146 tests pass across 8 test files. All features verified: broken actions fixed, PnL Calendar added to metrics and account detail, Finances page created with CRUD, Groups enhanced with daily PnL and stats. Review issues fixed: (1) Reconnect no longer disconnects, (2) useParams.id used in Account Detail, (3) Group stats derived from data, (4) Finances persists to localStorage, (5) Win Rate card merged into stats grid."
   }
 }
