@@ -1,6 +1,6 @@
 "use client";
 
-import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
+import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
 
 interface ProfitFactorGaugeProps {
@@ -45,6 +45,7 @@ export function ProfitFactorGauge({ value }: ProfitFactorGaugeProps) {
             startAngle={180}
             endAngle={0}
           >
+            <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
             <RadialBar
               dataKey="value"
               cornerRadius={10}
