@@ -10,5 +10,7 @@ export default async function Home() {
     redirect("/dashboard");
   }
 
-  return <LandingPage />;
+  const demoMode = process.env.DEMO_MODE === "true";
+
+  return <LandingPage demoMode={demoMode} />;
 }

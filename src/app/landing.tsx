@@ -1,11 +1,18 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { TrendingUp, BarChart3, Users, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { TrendingUp, BarChart3, Users, Shield, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function LandingPage() {
+interface LandingPageProps {
+  demoMode?: boolean;
+}
+
+export function LandingPage({ demoMode }: LandingPageProps) {
+  const router = useRouter();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted p-4">
       <div className="mx-auto max-w-4xl text-center">
@@ -51,9 +58,22 @@ export function LandingPage() {
           </Card>
         </div>
 
-        <Button size="lg" onClick={() => signIn("google")}>
-          Sign in with Google
-        </Button>
+        <div className="flex flex-col items-center gap-3">
+          <Button size="lg" onClick={() => signIn("google")}>
+            Sign in with Google
+          </Button>
+
+          {demoMode && (
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => router.push("/dashboard")}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Enter Demo Mode
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
