@@ -59,7 +59,7 @@ export function LandingPage({ demoMode }: LandingPageProps) {
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <Button size="lg" onClick={() => signIn("google")}>
+          <Button size="lg" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
             Sign in with Google
           </Button>
 

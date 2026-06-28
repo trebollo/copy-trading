@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, ArrowUpDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GroupCard, type GroupCardData } from "@/components/groups/group-card";
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
 import type { CreateCopyGroupInput } from "@/lib/validations/copy-group";
+
+type SortField = "name" | "memberCount" | "status" | "lastActivityAt" | "createdAt";
+type SortDirection = "asc" | "desc";
 
 // Sample accounts for group creation dialog
 const sampleAccounts = [
@@ -56,6 +59,51 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<GroupCardData[]>(sampleGroups);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  // Filter state
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const filteredAndSortedGroups = useMemo(() => {
+    let result = [...groups];
+
+    // Apply filters
+    if (filterStatus !== "all") {
+      const isActive = filterStatus === "active";
+      result = result.filter((group) => group.isActive === isActive);
+    }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case "name":
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case "memberCount":
+          comparison = a.memberCount - b.memberCount;
+          break;
+        case "status":
+          comparison = Number(a.isActive) - Number(b.isActive);
+          break;
+        case "lastActivityAt": {
+          const dateA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+          const dateB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+        }
+        case "createdAt":
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+    return result;
+  }, [groups, sortField, sortDirection, filterStatus]);
+
   const handleCreate = (data: CreateCopyGroupInput) => {
     const masterAccount = sampleAccounts.find(
       (acc) => acc.id === data.masterAccountId
@@ -101,7 +149,64 @@ export default function GroupsPage() {
         </Button>
       </div>
 
-      {groups.length === 0 ? (
+      {/* Filters and Sorting Controls */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Filters:</span>
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="h-8 rounded-md border border-input bg-background px-3 text-sm"
+            aria-label="Filter by status"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Sort:</span>
+          <select
+            value={`${sortField}-${sortDirection}`}
+            onChange={(e) => {
+              const [field, dir] = e.target.value.split("-") as [SortField, SortDirection];
+              setSortField(field);
+              setSortDirection(dir);
+            }}
+            className="h-8 rounded-md border border-input bg-background px-3 text-sm"
+            aria-label="Sort groups"
+          >
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="memberCount-desc">Members (Most)</option>
+            <option value="memberCount-asc">Members (Least)</option>
+            <option value="lastActivityAt-desc">Recent Activity</option>
+            <option value="lastActivityAt-asc">Oldest Activity</option>
+            <option value="createdAt-desc">Newest Created</option>
+            <option value="createdAt-asc">Oldest Created</option>
+          </select>
+        </div>
+      </div>
+
+      {filteredAndSortedGroups.length === 0 && groups.length > 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <p className="text-lg font-medium">No groups match filters</p>
+          <p className="text-sm text-muted-foreground">
+            Try adjusting your filter criteria.
+          </p>
+          <Button
+            className="mt-4"
+            variant="outline"
+            onClick={() => setFilterStatus("all")}
+          >
+            Clear Filters
+          </Button>
+        </div>
+      ) : groups.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
           <p className="text-lg font-medium">No copy groups yet</p>
           <p className="text-sm text-muted-foreground">
@@ -117,7 +222,7 @@ export default function GroupsPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map((group) => (
+          {filteredAndSortedGroups.map((group) => (
             <GroupCard
               key={group.id}
               group={group}

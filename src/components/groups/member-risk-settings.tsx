@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ export interface MemberRiskData {
   riskMultiplier: number;
   maxLots: number;
   maxDailyLoss: number;
+  maxDailyProfit: number;
   isActive: boolean;
 }
 
@@ -39,9 +40,10 @@ export function MemberRiskSettings({
   const [riskMultiplier, setRiskMultiplier] = useState(member.riskMultiplier);
   const [maxLots, setMaxLots] = useState(member.maxLots);
   const [maxDailyLoss, setMaxDailyLoss] = useState(member.maxDailyLoss);
+  const [maxDailyProfit, setMaxDailyProfit] = useState(member.maxDailyProfit);
 
   const handleSave = () => {
-    onSave(member.id, { riskMultiplier, maxLots, maxDailyLoss });
+    onSave(member.id, { riskMultiplier, maxLots, maxDailyLoss, maxDailyProfit });
     setIsEditing(false);
   };
 
@@ -49,6 +51,7 @@ export function MemberRiskSettings({
     setRiskMultiplier(member.riskMultiplier);
     setMaxLots(member.maxLots);
     setMaxDailyLoss(member.maxDailyLoss);
+    setMaxDailyProfit(member.maxDailyProfit);
     setIsEditing(false);
   };
 
@@ -67,6 +70,9 @@ export function MemberRiskSettings({
             <Badge variant="outline" className="text-xs">
               {member.accountPlatform}
             </Badge>
+            <Badge variant={member.isActive ? "default" : "secondary"} className="text-xs">
+              {member.isActive ? "Active" : "Inactive"}
+            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <Switch
@@ -74,6 +80,17 @@ export function MemberRiskSettings({
               onCheckedChange={handleToggleActive}
               aria-label={`Toggle ${member.accountName}`}
             />
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7"
+                onClick={() => setIsEditing(true)}
+                aria-label={`Edit settings for ${member.accountName}`}
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            )}
             {onRemove && (
               <Button
                 variant="ghost"
@@ -90,7 +107,7 @@ export function MemberRiskSettings({
       <CardContent>
         {isEditing ? (
           <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div>
                 <label className="text-xs text-muted-foreground">
                   Risk Multiplier
@@ -137,6 +154,21 @@ export function MemberRiskSettings({
                   className="h-8 text-sm"
                 />
               </div>
+              <div>
+                <label className="text-xs text-muted-foreground">
+                  Max Daily Profit ($)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100000"
+                  value={maxDailyProfit}
+                  onChange={(e) =>
+                    setMaxDailyProfit(parseInt(e.target.value) || 0)
+                  }
+                  className="h-8 text-sm"
+                />
+              </div>
             </div>
             <div className="flex gap-2 justify-end">
               <Button
@@ -156,8 +188,14 @@ export function MemberRiskSettings({
           </div>
         ) : (
           <div
-            className="grid grid-cols-3 gap-3 cursor-pointer rounded p-1 -m-1 hover:bg-muted/50 transition-colors"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-4 cursor-pointer rounded p-1 -m-1 hover:bg-muted/50 transition-colors"
             onClick={() => setIsEditing(true)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") setIsEditing(true);
+            }}
+            aria-label={`Edit risk settings for ${member.accountName}`}
           >
             <div>
               <p className="text-xs text-muted-foreground">Multiplier</p>
@@ -170,6 +208,10 @@ export function MemberRiskSettings({
             <div>
               <p className="text-xs text-muted-foreground">Max Daily Loss</p>
               <p className="text-sm font-medium">${member.maxDailyLoss}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Max Daily Profit</p>
+              <p className="text-sm font-medium">${member.maxDailyProfit}</p>
             </div>
           </div>
         )}

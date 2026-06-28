@@ -2,16 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Crown, Settings } from "lucide-react";
+import { ArrowLeft, Crown, Settings, Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   MemberRiskSettings,
   type MemberRiskData,
@@ -47,6 +55,7 @@ const sampleMembers: MemberRiskData[] = [
     riskMultiplier: 1.5,
     maxLots: 15,
     maxDailyLoss: 2000,
+    maxDailyProfit: 5000,
     isActive: true,
   },
   {
@@ -57,6 +66,7 @@ const sampleMembers: MemberRiskData[] = [
     riskMultiplier: 0.5,
     maxLots: 5,
     maxDailyLoss: 500,
+    maxDailyProfit: 2000,
     isActive: true,
   },
   {
@@ -67,8 +77,14 @@ const sampleMembers: MemberRiskData[] = [
     riskMultiplier: 1.0,
     maxLots: 10,
     maxDailyLoss: 1000,
+    maxDailyProfit: 3000,
     isActive: false,
   },
+];
+
+const sampleAvailableAccounts = [
+  { id: "5", name: "Apex 100K Eval", platform: "Tradovate" },
+  { id: "6", name: "TopStep 50K", platform: "Tradovate" },
 ];
 
 const sampleActivity: CopyActivityEvent[] = [
@@ -125,6 +141,12 @@ export default function GroupDetailPage() {
   const [group, setGroup] = useState(sampleGroup);
   const [members, setMembers] = useState<MemberRiskData[]>(sampleMembers);
   const [activity] = useState<CopyActivityEvent[]>(sampleActivity);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
+
+  // Edit group form state
+  const [editName, setEditName] = useState(group.name);
+  const [editDescription, setEditDescription] = useState(group.description || "");
 
   const handleToggleGroup = () => {
     setGroup((prev) => ({ ...prev, isActive: !prev.isActive }));
@@ -142,6 +164,40 @@ export default function GroupDetailPage() {
   const handleRemoveMember = (memberId: string) => {
     setMembers((prev) => prev.filter((m) => m.id !== memberId));
   };
+
+  const handleEditGroup = () => {
+    setEditName(group.name);
+    setEditDescription(group.description || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveGroup = () => {
+    setGroup((prev) => ({
+      ...prev,
+      name: editName.trim(),
+      description: editDescription.trim() || prev.description,
+    }));
+    setEditDialogOpen(false);
+  };
+
+  const handleAddMember = (accountId: string, accountName: string, accountPlatform: string) => {
+    const newMember: MemberRiskData = {
+      id: `m-${Date.now()}`,
+      accountId,
+      accountName,
+      accountPlatform,
+      riskMultiplier: 1.0,
+      maxLots: 10,
+      maxDailyLoss: 1000,
+      maxDailyProfit: 3000,
+      isActive: true,
+    };
+    setMembers((prev) => [...prev, newMember]);
+    setAddMemberDialogOpen(false);
+  };
+
+  const activeMembers = members.filter((m) => m.isActive).length;
+  const inactiveMembers = members.filter((m) => !m.isActive).length;
 
   return (
     <div className="space-y-6">
@@ -180,7 +236,7 @@ export default function GroupDetailPage() {
               aria-label="Toggle group"
             />
           </div>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleEditGroup}>
             <Settings className="mr-2 h-4 w-4" />
             Edit Group
           </Button>
@@ -224,19 +280,59 @@ export default function GroupDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Group Summary */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold">{members.length}</p>
+              <p className="text-sm text-muted-foreground">Total Followers</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-500">{activeMembers}</p>
+              <p className="text-sm text-muted-foreground">Active</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-muted-foreground">{inactiveMembers}</p>
+              <p className="text-sm text-muted-foreground">Inactive</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Followers */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
             Follower Accounts ({members.length})
           </h3>
+          <Button size="sm" variant="outline" onClick={() => setAddMemberDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Account
+          </Button>
         </div>
+        <p className="text-sm text-muted-foreground">
+          Click on any account&apos;s settings to edit risk multipliers, lot limits, and profit/loss limits.
+          Use the toggle to activate or deactivate individual accounts.
+        </p>
         {members.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center">
               <p className="text-sm text-muted-foreground">
                 No follower accounts. Add accounts to start copying trades.
               </p>
+              <Button className="mt-4" size="sm" onClick={() => setAddMemberDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Account
+              </Button>
             </CardContent>
           </Card>
         ) : (
@@ -262,6 +358,95 @@ export default function GroupDetailPage() {
           <CopyActivityFeed events={activity} />
         </CardContent>
       </Card>
+
+      {/* Edit Group Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Edit Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="edit-group-name">
+                Group Name
+              </label>
+              <Input
+                id="edit-group-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Group name"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="edit-group-description">
+                Description
+              </label>
+              <Input
+                id="edit-group-description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Brief description"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <X className="mr-1 h-3 w-3" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveGroup} disabled={!editName.trim()}>
+              <Check className="mr-1 h-3 w-3" />
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Member Dialog */}
+      <Dialog open={addMemberDialogOpen} onOpenChange={setAddMemberDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Add Follower Account</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <p className="text-sm text-muted-foreground">
+              Select an account to add as a follower. You can configure risk settings after adding.
+            </p>
+            {sampleAvailableAccounts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No available accounts to add.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {sampleAvailableAccounts
+                  .filter((acc) => !members.some((m) => m.accountId === acc.id))
+                  .map((account) => (
+                    <div
+                      key={account.id}
+                      className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{account.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {account.platform}
+                        </Badge>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7"
+                        onClick={() => handleAddMember(account.id, account.name, account.platform)}
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

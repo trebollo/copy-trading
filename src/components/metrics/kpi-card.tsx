@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,9 +11,10 @@ interface KpiCardProps {
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
   icon?: React.ReactNode;
+  href?: string;
 }
 
-export function KpiCard({ label, value, trend, trendValue, icon }: KpiCardProps) {
+export function KpiCard({ label, value, trend, trendValue, icon, href }: KpiCardProps) {
   const TrendIcon =
     trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
 
@@ -23,8 +25,8 @@ export function KpiCard({ label, value, trend, trendValue, icon }: KpiCardProps)
         ? "text-red-500"
         : "text-muted-foreground";
 
-  return (
-    <Card>
+  const cardContent = (
+    <Card className={cn(href && "cursor-pointer transition-shadow hover:shadow-md hover:border-primary/50")}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{label}</CardTitle>
         {icon && <div className="text-muted-foreground">{icon}</div>}
@@ -40,4 +42,14 @@ export function KpiCard({ label, value, trend, trendValue, icon }: KpiCardProps)
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return cardContent;
 }

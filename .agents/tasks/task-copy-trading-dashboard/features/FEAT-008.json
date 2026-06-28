@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-008",
+  "type": "feat",
+  "description": "Implement Google auth flow and clickable dashboard cards with filtering/sorting on detail pages",
+  "status": "in_progress",
+  "steps": [
+    "Update KpiCard component to accept optional href prop and wrap in Next.js Link when provided",
+    "Update DashboardOverview to pass href to each KpiCard (Total PnL -> /metrics, Active Accounts -> /accounts, Active Groups -> /groups, Total Trades -> /metrics)",
+    "Update landing page signIn call to include callbackUrl: /dashboard",
+    "Add filtering and sorting controls to accounts page",
+    "Add filtering and sorting controls to groups page",
+    "Verify build and tests pass"
+  ],
+  "acceptance_criteria": [
+    "KpiCard accepts href prop and renders as clickable link when provided",
+    "Dashboard cards navigate to correct detail pages",
+    "Landing page signIn redirects to /dashboard after Google auth",
+    "Login page signIn redirects to /dashboard after Google auth",
+    "Accounts page has sorting (by name, balance, status, platform) and filtering (by status, platform)",
+    "Groups page has sorting (by name, member count, status, activity) and filtering (by status)",
+    "pnpm build succeeds",
+    "pnpm test passes"
+  ],
+  "verification": [
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm build",
+    "cd /projects/sandbox/copy-trading && unset NODE_OPTIONS && pnpm test"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

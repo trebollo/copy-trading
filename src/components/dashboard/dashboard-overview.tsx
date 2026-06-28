@@ -144,6 +144,7 @@ export function DashboardOverview() {
                 : "neutral"
           }
           icon={<DollarSign className="h-4 w-4" />}
+          href="/metrics"
         />
         <KpiCard
           label="Active Accounts"
@@ -151,12 +152,14 @@ export function DashboardOverview() {
           trend="neutral"
           trendValue={`${metrics?.accountCount || 0} total`}
           icon={<Wallet className="h-4 w-4" />}
+          href="/accounts"
         />
         <KpiCard
           label="Active Groups"
           value={String(groupCount)}
           trend="neutral"
           icon={<Users className="h-4 w-4" />}
+          href="/groups"
         />
         <KpiCard
           label="Total Trades"
@@ -164,6 +167,7 @@ export function DashboardOverview() {
           trend="neutral"
           trendValue={`${((m?.winRate || 0) * 100).toFixed(0)}% win rate`}
           icon={<Activity className="h-4 w-4" />}
+          href="/metrics"
         />
       </div>
 
