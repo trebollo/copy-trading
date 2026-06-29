@@ -157,7 +157,7 @@ export function DashboardOverview() {
 
         if (metricsRes.ok) {
           const data = await metricsRes.json();
-          if (data?.metrics && data.metrics.totalTrades > 0) {
+          if (data?.metrics) {
             setMetrics({
               metrics: {
                 totalPnl: data.metrics.totalPnl ?? 0,
@@ -215,8 +215,8 @@ export function DashboardOverview() {
     );
   }
 
-  // No data available in production mode
-  if (!metrics) {
+  // No accounts connected in production mode
+  if (!metrics || metrics.accountCount === 0) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">

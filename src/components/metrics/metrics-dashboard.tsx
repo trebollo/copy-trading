@@ -150,9 +150,8 @@ export function MetricsDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        // If data is effectively empty (no real trades)
-        if (data.metrics?.totalTrades === 0 && data.accountCount === 0) {
-          // In demo mode, use mock data; in production, show empty state
+        // If no accounts at all, show empty state (or demo data in demo mode)
+        if (data.accountCount === 0 && (!data.metrics || data.metrics.totalTrades === 0)) {
           setMetrics(demo ? mockMetricsData : null);
         } else {
           setMetrics(data);
@@ -239,7 +238,7 @@ export function MetricsDashboard() {
   // Static deterministic time-series data for profit factor and win rate
   // Only shown when metrics data exists (demo or real data)
   const profitFactorData = useMemo(() => {
-    if (!metrics) return [];
+    if (!metrics || !demo) return [];
     const values = [
       1.82, 1.91, 1.85, 1.97, 2.03, 1.95, 2.08, 2.14, 2.01, 1.93,
       2.05, 2.12, 2.18, 2.25, 2.10, 2.03, 2.15, 2.22, 2.30, 2.17,
@@ -254,10 +253,10 @@ export function MetricsDashboard() {
         profitFactor,
       };
     });
-  }, [metrics]);
+  }, [metrics, demo]);
 
   const winRateData = useMemo(() => {
-    if (!metrics) return [];
+    if (!metrics || !demo) return [];
     const values = [
       0.600, 0.615, 0.608, 0.622, 0.635, 0.628, 0.641, 0.650, 0.637, 0.625,
       0.640, 0.652, 0.660, 0.672, 0.658, 0.645, 0.661, 0.670, 0.680, 0.668,
@@ -272,10 +271,10 @@ export function MetricsDashboard() {
         winRate,
       };
     });
-  }, [metrics]);
+  }, [metrics, demo]);
 
   const calendarData = useMemo(() => {
-    if (!metrics) return [];
+    if (!metrics || !demo) return [];
     const pnlValues = [
       150, -75, 300, 200, -50, 0, 0,
       425, -125, 350, 175, -200, 0, 0,
@@ -300,7 +299,7 @@ export function MetricsDashboard() {
       });
     }
     return data;
-  }, [metrics]);
+  }, [metrics, demo]);
 
   return (
     <div className="space-y-6">
@@ -409,34 +408,42 @@ export function MetricsDashboard() {
                 </Card>
               </div>
 
-              <div className="grid gap-6 lg:grid-cols-2">
+              {(profitFactorData.length > 0 || winRateData.length > 0) && (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {profitFactorData.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Profit Factor Over Time</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ProfitFactorChart data={profitFactorData} />
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {winRateData.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Win Rate Over Time</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <WinRateChart data={winRateData} />
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {calendarData.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Profit Factor Over Time</CardTitle>
+                    <CardTitle>PnL Calendar</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ProfitFactorChart data={profitFactorData} />
+                    <PnlCalendar data={calendarData} />
                   </CardContent>
                 </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Win Rate Over Time</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <WinRateChart data={winRateData} />
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>PnL Calendar</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PnlCalendar data={calendarData} />
-                </CardContent>
-              </Card>
+              )}
             </>
           )}
         </TabsContent>
