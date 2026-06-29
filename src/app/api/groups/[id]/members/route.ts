@@ -4,6 +4,47 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { addMemberSchema } from "@/lib/validations/copy-group";
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Verify group ownership
+    const group = await prisma.copyGroup.findFirst({
+      where: { id, userId: session.user.id },
+    });
+
+    if (!group) {
+      return NextResponse.json({ error: "Group not found" }, { status: 404 });
+    }
+
+    const members = await prisma.copyGroupMember.findMany({
+      where: { groupId: id },
+      include: {
+        tradingAccount: {
+          select: { id: true, name: true, platform: true, status: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ members });
+  } catch (error) {
+    console.error("Error fetching members:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch members" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

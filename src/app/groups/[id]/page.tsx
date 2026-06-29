@@ -199,39 +199,40 @@ export default function GroupDetailPage() {
 
     async function fetchGroupData() {
       try {
-        const [groupRes, membersRes, accountsRes] = await Promise.all([
+        const [groupRes, accountsRes] = await Promise.all([
           fetch(`/api/groups/${groupId}`),
-          fetch(`/api/groups/${groupId}/members`),
           fetch("/api/accounts?limit=100"),
         ]);
 
         if (groupRes.ok) {
           const data = await groupRes.json();
+          const groupData = data.group;
           setGroup({
-            id: data.id,
-            name: data.name,
-            description: data.description || "",
-            isActive: data.isActive ?? true,
-            masterAccount: data.masterAccount || { id: "", name: "Unknown", platform: "Unknown", status: "unknown" },
-            createdAt: data.createdAt,
+            id: groupData.id,
+            name: groupData.name,
+            description: groupData.description || "",
+            isActive: groupData.isActive ?? true,
+            masterAccount: groupData.masterAccount || { id: "", name: "Unknown", platform: "Unknown", status: "unknown" },
+            createdAt: groupData.createdAt,
           });
-          setEditName(data.name);
-          setEditDescription(data.description || "");
-        }
+          setEditName(groupData.name);
+          setEditDescription(groupData.description || "");
 
-        if (membersRes.ok) {
-          const data = await membersRes.json();
-          const fetchedMembers: MemberRiskData[] = (data.members || data || []).map((m: Record<string, unknown>) => ({
-            id: m.id as string,
-            accountId: m.accountId as string,
-            accountName: (m.accountName as string) || "Unknown",
-            accountPlatform: (m.accountPlatform as string) || "Unknown",
-            riskMultiplier: (m.riskMultiplier as number) || 1.0,
-            maxLots: (m.maxLots as number) || 10,
-            maxDailyLoss: (m.maxDailyLoss as number) || 1000,
-            maxDailyProfit: (m.maxDailyProfit as number) || 3000,
-            isActive: (m.isActive as boolean) ?? true,
-          }));
+          // Members are included in the group response
+          const fetchedMembers: MemberRiskData[] = (groupData.members || []).map((m: Record<string, unknown>) => {
+            const tradingAccount = m.tradingAccount as Record<string, unknown> | undefined;
+            return {
+              id: m.id as string,
+              accountId: (m.tradingAccountId as string) || (tradingAccount?.id as string) || "",
+              accountName: (tradingAccount?.name as string) || "Unknown",
+              accountPlatform: (tradingAccount?.platform as string) || "Unknown",
+              riskMultiplier: (m.riskMultiplier as number) || 1.0,
+              maxLots: (m.maxLots as number) || 10,
+              maxDailyLoss: (m.maxDailyLoss as number) || 1000,
+              maxDailyProfit: (m.maxDailyProfit as number) || 3000,
+              isActive: (m.isActive as boolean) ?? true,
+            };
+          });
           setMembers(fetchedMembers);
         }
 
