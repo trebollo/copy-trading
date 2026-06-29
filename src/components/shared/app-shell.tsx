@@ -6,7 +6,7 @@ import { MobileNav } from "@/components/shared/mobile-nav";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-[100dvh] flex-col md:flex-row md:overflow-hidden">
+    <div className="flex h-[100dvh] flex-col overflow-hidden md:flex-row">
       <Sidebar />
       <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
         <Header />

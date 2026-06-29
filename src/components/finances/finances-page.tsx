@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { format } from "date-fns";
+import { format, subMonths, subYears } from "date-fns";
 import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,6 +163,7 @@ export function FinancesPageContent() {
   const [transactions, setTransactions] =
     useState<Transaction[]>(initialTransactions);
   const [filterType, setFilterType] = useState<"all" | TransactionType>("all");
+  const [filterPeriod, setFilterPeriod] = useState<string>("all_time");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
@@ -181,8 +182,31 @@ export function FinancesPageContent() {
     }
   }, [transactions]);
 
+  const periodCutoffDate = useMemo(() => {
+    const now = new Date();
+    switch (filterPeriod) {
+      case "last_month":
+        return subMonths(now, 1);
+      case "last_3_months":
+        return subMonths(now, 3);
+      case "last_6_months":
+        return subMonths(now, 6);
+      case "last_year":
+        return subYears(now, 1);
+      default:
+        return null;
+    }
+  }, [filterPeriod]);
+
+  const periodFilteredTransactions = useMemo(() => {
+    if (!periodCutoffDate) return transactions;
+    return transactions.filter(
+      (t) => new Date(t.date) >= periodCutoffDate
+    );
+  }, [transactions, periodCutoffDate]);
+
   const filteredTransactions = useMemo(() => {
-    let filtered = [...transactions];
+    let filtered = [...periodFilteredTransactions];
     if (filterType !== "all") {
       filtered = filtered.filter((t) => t.type === filterType);
     }
@@ -190,22 +214,22 @@ export function FinancesPageContent() {
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     return filtered;
-  }, [transactions, filterType]);
+  }, [periodFilteredTransactions, filterType]);
 
   const totalExpenses = useMemo(
     () =>
-      transactions
+      periodFilteredTransactions
         .filter((t) => t.type === "expense")
         .reduce((sum, t) => sum + t.amount, 0),
-    [transactions]
+    [periodFilteredTransactions]
   );
 
   const totalPayouts = useMemo(
     () =>
-      transactions
+      periodFilteredTransactions
         .filter((t) => t.type === "payout")
         .reduce((sum, t) => sum + t.amount, 0),
-    [transactions]
+    [periodFilteredTransactions]
   );
 
   const netProfit = totalPayouts - totalExpenses;
@@ -216,7 +240,7 @@ export function FinancesPageContent() {
       { month: string; expenses: number; payouts: number }
     > = {};
 
-    transactions.forEach((t) => {
+    periodFilteredTransactions.forEach((t) => {
       const monthKey = format(new Date(t.date), "yyyy-MM");
       const monthLabel = format(new Date(t.date), "MMMM yyyy");
       if (!groups[monthKey]) {
@@ -232,7 +256,7 @@ export function FinancesPageContent() {
     return Object.entries(groups)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([, value]) => value);
-  }, [transactions]);
+  }, [periodFilteredTransactions]);
 
   const handleAddTransaction = (data: TransactionFormData) => {
     if (editingTransaction) {
@@ -322,7 +346,7 @@ export function FinancesPageContent() {
 
       {/* Actions Row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium">Filter:</span>
           <Select
             value={filterType}
@@ -337,6 +361,22 @@ export function FinancesPageContent() {
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="expense">Expense</SelectItem>
               <SelectItem value="payout">Payout</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-sm font-medium">Period:</span>
+          <Select
+            value={filterPeriod}
+            onValueChange={(v) => setFilterPeriod(v)}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_time">All time</SelectItem>
+              <SelectItem value="last_month">Last month</SelectItem>
+              <SelectItem value="last_3_months">Last 3 months</SelectItem>
+              <SelectItem value="last_6_months">Last 6 months</SelectItem>
+              <SelectItem value="last_year">Last year</SelectItem>
             </SelectContent>
           </Select>
         </div>

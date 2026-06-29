@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Bell, Search, LogOut, User, TrendingUp, FileText, AlertTriangle } from "lucide-react";
+import { Bell, Search, LogOut, User, TrendingUp, FileText, AlertTriangle, Settings } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -202,6 +203,12 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => signOut()}>
               <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
               <span>Log out</span>
