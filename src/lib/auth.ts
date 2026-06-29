@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
-const isDemoMode = process.env.DEMO_MODE === "true";
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 const providers: NextAuthOptions["providers"] = [
   GoogleProvider({

@@ -9,8 +9,8 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      // In DEMO_MODE, return mock data instead of 401
-      if (process.env.DEMO_MODE === "true") {
+      // In demo mode, return mock data instead of 401
+      if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
         return NextResponse.json({
           metrics: {
             totalPnl: 4832.5,
@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
 
     const accountIds = accounts.map((a: { id: string; name: string; status: string }) => a.id);
 
-    // If no accounts found and DEMO_MODE, return mock data
-    if (accountIds.length === 0 && process.env.DEMO_MODE === "true") {
+    // If no accounts found and demo mode, return mock data
+    if (accountIds.length === 0 && process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
       return NextResponse.json({
         metrics: {
           totalPnl: 4832.5,

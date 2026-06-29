@@ -140,7 +140,7 @@ export function DashboardOverview() {
   // In demo mode: initialize with mock data directly
   // In production mode: initialize with null/empty and fetch from API
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(demo ? mockMetrics : null);
-  const [recentTrades, _setRecentTrades] = useState<RecentTrade[]>(demo ? mockRecentTrades : []);
+  const [recentTrades, setRecentTrades] = useState<RecentTrade[]>(demo ? mockRecentTrades : []);
   const [groupCount, setGroupCount] = useState(demo ? 2 : 0);
   const [loading, setLoading] = useState(!demo);
 
@@ -149,9 +149,10 @@ export function DashboardOverview() {
 
     async function fetchData() {
       try {
-        const [metricsRes, groupsRes] = await Promise.all([
+        const [metricsRes, groupsRes, tradesRes] = await Promise.all([
           fetch("/api/metrics"),
           fetch("/api/groups?limit=1"),
+          fetch("/api/trades?limit=5"),
         ]);
 
         if (metricsRes.ok) {
@@ -179,6 +180,21 @@ export function DashboardOverview() {
           const data = await groupsRes.json();
           if (data.pagination?.total > 0) {
             setGroupCount(data.pagination.total);
+          }
+        }
+
+        if (tradesRes.ok) {
+          const data = await tradesRes.json();
+          if (data.trades && data.trades.length > 0) {
+            setRecentTrades(data.trades.map((t: Record<string, unknown>) => ({
+              id: t.id as string,
+              symbol: t.symbol as string,
+              side: t.side as string,
+              quantity: t.quantity as number,
+              pnl: t.pnl as number | null,
+              status: t.status as string,
+              openedAt: t.openedAt as string,
+            })));
           }
         }
       } catch (error) {

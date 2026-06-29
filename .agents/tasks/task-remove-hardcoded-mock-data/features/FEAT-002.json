@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix review issues: unify DEMO_MODE to NEXT_PUBLIC_DEMO_MODE everywhere, fix Tradovate CORS by adding server-side proxy route, fix silent success on network errors, add trades API route and fetch in production mode.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1: Unify env vars - change /api/metrics/route.ts, middleware.ts, auth.ts, and page.tsx to use NEXT_PUBLIC_DEMO_MODE instead of DEMO_MODE. Update .env.example to remove the separate DEMO_MODE line.",
+    "Step 2: Create /api/tradovate/connect/route.ts as a server-side proxy for Tradovate auth to avoid CORS. Fix endpoint casing to accessTokenRequest (camelCase).",
+    "Step 3: Fix settings page to call /api/tradovate/connect instead of calling Tradovate directly. Fix error handling to NOT mark as connected on failure.",
+    "Step 4: Create /api/trades/route.ts that fetches trades for the authenticated user's accounts.",
+    "Step 5: Update TradesPageContent to fetch from /api/trades in production mode.",
+    "Step 6: Update DashboardOverview to fetch recent trades from /api/trades?limit=5 in production mode."
+  ],
+  "acceptance_criteria": [
+    "Only NEXT_PUBLIC_DEMO_MODE is used across all server and client code",
+    "The /api/tradovate/connect route proxies auth requests server-side (no CORS)",
+    "Settings page calls the internal proxy route, not Tradovate directly",
+    "On connection failure, error toast is shown and platform is NOT marked connected",
+    "The /api/trades route returns trades for the authenticated user",
+    "TradesPageContent fetches from /api/trades in production mode",
+    "DashboardOverview fetches recent trades from /api/trades?limit=5",
+    "Build passes without TypeScript errors",
+    "All tests pass"
+  ],
+  "verification": [
+    "Run NODE_OPTIONS='' npx next build and confirm it succeeds",
+    "Run NODE_OPTIONS='' npx vitest run and confirm all tests pass"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

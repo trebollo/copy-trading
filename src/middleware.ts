@@ -4,7 +4,7 @@ import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
   // In demo mode, allow all routes without authentication
-  if (process.env.DEMO_MODE === "true") {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
     return NextResponse.next();
   }
 

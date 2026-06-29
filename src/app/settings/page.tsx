@@ -245,15 +245,13 @@ export default function SettingsPage() {
 
     setTradovateConnecting(true);
     try {
-      // Attempt to authenticate with Tradovate demo API
-      const response = await fetch("https://demo.tradovateapi.com/v1/auth/accesstokenrequest", {
+      // Call our server-side proxy to avoid CORS issues
+      const response = await fetch("/api/tradovate/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: tradovateUsername.trim(),
+          username: tradovateUsername.trim(),
           password: tradovatePassword.trim(),
-          appId: "CopyTrading",
-          appVersion: "1.0",
         }),
       });
 
@@ -268,21 +266,12 @@ export default function SettingsPage() {
         setTradovateDialogOpen(false);
         toast.success("Tradovate connected successfully");
       } else {
-        const errorData = await response.text();
-        toast.error(`Connection failed: Invalid credentials. ${errorData}`);
+        const errorData = await response.json();
+        toast.error(`Connection failed: ${errorData.error || "Invalid credentials"}`);
       }
     } catch (error) {
-      // Network errors are expected if there's no real API access
-      // Still mark as connected for UX (credentials saved for later use)
-      setPlatforms((prev) =>
-        prev.map((p) =>
-          p.id === "tradovate"
-            ? { ...p, status: "connected" as const, lastSync: "Just now" }
-            : p
-        )
-      );
-      setTradovateDialogOpen(false);
-      toast.success("Tradovate credentials saved. Connection will be established when the service is available.");
+      // Network error - do NOT mark as connected
+      toast.error("Unable to reach Tradovate. Please check your network and try again.");
     } finally {
       setTradovateConnecting(false);
     }

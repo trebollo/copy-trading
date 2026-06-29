@@ -99,7 +99,7 @@ export function TradesPageContent() {
   const dateParam = searchParams.get("date");
   const demo = isDemoMode();
 
-  const [trades, _setTrades] = useState<Trade[]>(demo ? mockTrades : []);
+  const [trades, setTrades] = useState<Trade[]>(demo ? mockTrades : []);
   const [loading, setLoading] = useState(!demo);
   const [dateFilter, setDateFilter] = useState<string>(dateParam || "all");
   const [symbolFilter, setSymbolFilter] = useState<string>("all");
@@ -110,12 +110,27 @@ export function TradesPageContent() {
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Fetch trades in production mode (placeholder - API may not have a dedicated trades endpoint)
+  // Fetch trades in production mode
   useEffect(() => {
     if (demo) return;
-    // In production, trades would come from the API
-    // For now, we simply show empty state
-    setLoading(false);
+
+    async function fetchTrades() {
+      try {
+        const response = await fetch("/api/trades");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.trades && data.trades.length > 0) {
+            setTrades(data.trades);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch trades:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTrades();
   }, [demo]);
 
   const filteredAndSortedTrades = useMemo(() => {
