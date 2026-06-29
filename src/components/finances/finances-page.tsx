@@ -325,7 +325,7 @@ export function FinancesPageContent() {
   };
 
   return (
-    <div className="space-y-4 pb-2">
+    <div className="space-y-4">
       {/* Period Filter Pills */}
       <div className="flex flex-wrap gap-2">
         {periodOptions.map((option) => (
