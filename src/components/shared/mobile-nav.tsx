@@ -24,13 +24,9 @@ const navItems = [
 export function MobileNav() {
   const pathname = usePathname();
 
-  // Hide on auth/landing pages
-  const isAuthPage = pathname === "/" || pathname === "/login";
-  if (isAuthPage) return null;
-
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden items-center justify-around border-t bg-card py-2"
+      className="flex md:hidden items-center justify-around border-t bg-card py-2 shrink-0"
       aria-label="Mobile navigation"
     >
       {navItems.map((item) => {

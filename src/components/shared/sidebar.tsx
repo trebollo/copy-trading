@@ -43,7 +43,7 @@ export function Sidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:flex h-screen flex-col border-r bg-card transition-all duration-300",
+          "hidden md:flex h-full flex-col border-r bg-card transition-all duration-300",
           collapsed ? "w-16" : "w-64"
         )}
         aria-label="Main navigation"
