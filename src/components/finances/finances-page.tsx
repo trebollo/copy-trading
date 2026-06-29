@@ -147,6 +147,11 @@ const initialTransactions: Transaction[] = [
 
 const STORAGE_KEY = "finances-transactions";
 
+interface StoredTransactions {
+  mode: "demo" | "production";
+  data: Transaction[];
+}
+
 type PeriodFilter =
   | "this_month"
   | "last_3_months"
@@ -164,10 +169,27 @@ const periodOptions: { value: PeriodFilter; label: string }[] = [
 
 function loadTransactions(): Transaction[] {
   if (typeof window === "undefined") return isDemoMode() ? initialTransactions : [];
+  const currentMode = isDemoMode() ? "demo" : "production";
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved) as Transaction[];
+      const parsed = JSON.parse(saved);
+      // Check if stored data has the mode envelope
+      if (parsed && typeof parsed === "object" && "mode" in parsed && "data" in parsed) {
+        const stored = parsed as StoredTransactions;
+        // If mode doesn't match current mode, discard stale data
+        if (stored.mode !== currentMode) {
+          localStorage.removeItem(STORAGE_KEY);
+          return currentMode === "demo" ? initialTransactions : [];
+        }
+        return stored.data;
+      }
+      // Legacy format (plain array) - discard if not in demo mode
+      if (currentMode !== "demo") {
+        localStorage.removeItem(STORAGE_KEY);
+        return [];
+      }
+      return parsed as Transaction[];
     }
   } catch {
     // Fallback
@@ -229,7 +251,11 @@ export function FinancesPageContent() {
   // Persist to localStorage on every state change
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      const envelope: StoredTransactions = {
+        mode: isDemoMode() ? "demo" : "production",
+        data: transactions,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
     } catch {
       // Silently fail if localStorage is not available
     }
