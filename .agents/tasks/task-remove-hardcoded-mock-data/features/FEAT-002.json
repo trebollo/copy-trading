@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix review issues: unify DEMO_MODE to NEXT_PUBLIC_DEMO_MODE everywhere, fix Tradovate CORS by adding server-side proxy route, fix silent success on network errors, add trades API route and fetch in production mode.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1: Unify env vars - change /api/metrics/route.ts, middleware.ts, auth.ts, and page.tsx to use NEXT_PUBLIC_DEMO_MODE instead of DEMO_MODE. Update .env.example to remove the separate DEMO_MODE line.",
     "Step 2: Create /api/tradovate/connect/route.ts as a server-side proxy for Tradovate auth to avoid CORS. Fix endpoint casing to accessTokenRequest (camelCase).",
@@ -27,5 +27,5 @@
     "Run NODE_OPTIONS='' npx vitest run and confirm all tests pass"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Build passes cleanly. All 146 tests pass. The trades route uses explicit type annotations to satisfy strict TypeScript. The Tradovate proxy route handles both demo mode (no session required) and production mode (session required)."
 }
