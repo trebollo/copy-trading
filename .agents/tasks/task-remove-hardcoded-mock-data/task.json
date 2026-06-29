@@ -1,0 +1,7 @@
+{
+  "task_id": "task-remove-hardcoded-mock-data",
+  "task_description": "Fix all client components to respect NEXT_PUBLIC_DEMO_MODE: when demo mode is off, show empty states and fetch real data from API instead of displaying hardcoded mock data. Also fix the Tradovate connection flow in settings to use a credentials dialog.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

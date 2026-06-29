@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, RefreshCw, ArrowUpDown, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { CreateAccountDialog } from "@/components/accounts/create-account-dialog
 import { EditAccountDialog } from "@/components/accounts/edit-account-dialog";
 import type { CreateTradingAccountInput, UpdateTradingAccountInput } from "@/lib/validations/trading-account";
 import { TradingPlatform } from "@/lib/trading/types";
+import { isDemoMode } from "@/lib/demo-mode";
 
 interface TradingAccountData {
   id: string;
@@ -25,7 +26,7 @@ interface TradingAccountData {
 type SortField = "name" | "balance" | "status" | "platform" | "updatedAt";
 type SortDirection = "asc" | "desc";
 
-// Sample data for initial render (will be replaced by API calls)
+// Sample data for demo mode only
 const sampleAccounts: TradingAccountData[] = [
   {
     id: "1",
@@ -57,7 +58,10 @@ const sampleAccounts: TradingAccountData[] = [
 ];
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<TradingAccountData[]>(sampleAccounts);
+  const demo = isDemoMode();
+
+  const [accounts, setAccounts] = useState<TradingAccountData[]>(demo ? sampleAccounts : []);
+  const [loading, setLoading] = useState(!demo);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<TradingAccountData | null>(null);
@@ -70,7 +74,39 @@ export default function AccountsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPlatform, setFilterPlatform] = useState<string>("all");
 
-  const handleSort = (field: SortField) => {
+  // Fetch accounts from API in production mode
+  useEffect(() => {
+    if (demo) return;
+
+    async function fetchAccounts() {
+      try {
+        const res = await fetch("/api/accounts?limit=100");
+        if (res.ok) {
+          const data = await res.json();
+          const fetchedAccounts: TradingAccountData[] = (data.accounts || []).map((acc: Record<string, unknown>) => ({
+            id: acc.id as string,
+            name: acc.name as string,
+            platform: acc.platform as string,
+            accountId: acc.accountId as string,
+            apiKey: acc.apiKey as string | null | undefined,
+            apiSecret: acc.apiSecret as string | null | undefined,
+            balance: (acc.balance as number) ?? 0,
+            status: acc.status as string,
+            updatedAt: acc.updatedAt as string,
+          }));
+          setAccounts(fetchedAccounts);
+        }
+      } catch (error) {
+        console.error("Failed to fetch accounts:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAccounts();
+  }, [demo]);
+
+  const _handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -122,54 +158,165 @@ export default function AccountsPage() {
     return Array.from(uniquePlatforms);
   }, [accounts]);
 
-  const handleCreate = (data: CreateTradingAccountInput) => {
-    const newAccount: TradingAccountData = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      platform: data.platform,
-      accountId: data.accountId,
-      apiKey: data.apiKey,
-      apiSecret: data.apiSecret,
-      balance: 0,
-      status: "active",
-      updatedAt: new Date().toISOString(),
-    };
-    setAccounts((prev) => [newAccount, ...prev]);
+  const handleCreate = async (data: CreateTradingAccountInput) => {
+    if (demo) {
+      const newAccount: TradingAccountData = {
+        id: crypto.randomUUID(),
+        name: data.name,
+        platform: data.platform,
+        accountId: data.accountId,
+        apiKey: data.apiKey,
+        apiSecret: data.apiSecret,
+        balance: 0,
+        status: "active",
+        updatedAt: new Date().toISOString(),
+      };
+      setAccounts((prev) => [newAccount, ...prev]);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        const newAccount: TradingAccountData = {
+          id: created.id,
+          name: created.name,
+          platform: created.platform,
+          accountId: created.accountId,
+          apiKey: created.apiKey,
+          apiSecret: created.apiSecret,
+          balance: created.balance ?? 0,
+          status: created.status,
+          updatedAt: created.updatedAt,
+        };
+        setAccounts((prev) => [newAccount, ...prev]);
+        toast.success("Account created");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error((err as { error?: string }).error || "Failed to create account");
+      }
+    } catch (error) {
+      console.error("Failed to create account:", error);
+      toast.error("Failed to create account");
+    }
   };
 
-  const handleEdit = (data: UpdateTradingAccountInput) => {
+  const handleEdit = async (data: UpdateTradingAccountInput) => {
     if (!editingAccount) return;
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === editingAccount.id
-          ? {
-              ...acc,
-              ...data,
-              updatedAt: new Date().toISOString(),
-            }
-          : acc
-      )
-    );
+
+    if (demo) {
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === editingAccount.id
+            ? { ...acc, ...data, updatedAt: new Date().toISOString() }
+            : acc
+        )
+      );
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/accounts/${editingAccount.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setAccounts((prev) =>
+          prev.map((acc) =>
+            acc.id === editingAccount.id
+              ? {
+                  ...acc,
+                  name: updated.name ?? acc.name,
+                  platform: updated.platform ?? acc.platform,
+                  accountId: updated.accountId ?? acc.accountId,
+                  status: updated.status ?? acc.status,
+                  updatedAt: updated.updatedAt ?? new Date().toISOString(),
+                }
+              : acc
+          )
+        );
+        toast.success("Account updated");
+      } else {
+        toast.error("Failed to update account");
+      }
+    } catch (error) {
+      console.error("Failed to update account:", error);
+      toast.error("Failed to update account");
+    }
   };
 
-  const handleSync = (id: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === id ? { ...acc, updatedAt: new Date().toISOString() } : acc
-      )
-    );
-    toast.success("Account synced");
+  const handleSync = async (id: string) => {
+    if (demo) {
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === id ? { ...acc, updatedAt: new Date().toISOString() } : acc
+        )
+      );
+      toast.success("Account synced");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/accounts/${id}/sync`, { method: "POST" });
+      if (res.ok) {
+        const synced = await res.json();
+        setAccounts((prev) =>
+          prev.map((acc) =>
+            acc.id === id
+              ? { ...acc, balance: synced.balance ?? acc.balance, updatedAt: synced.updatedAt ?? new Date().toISOString() }
+              : acc
+          )
+        );
+        toast.success("Account synced");
+      } else {
+        toast.error("Failed to sync account");
+      }
+    } catch (error) {
+      console.error("Failed to sync account:", error);
+      toast.error("Failed to sync account");
+    }
   };
 
-  const handleSyncAll = () => {
-    setAccounts((prev) =>
-      prev.map((acc) => ({ ...acc, updatedAt: new Date().toISOString() }))
-    );
+  const handleSyncAll = async () => {
+    if (demo) {
+      setAccounts((prev) =>
+        prev.map((acc) => ({ ...acc, updatedAt: new Date().toISOString() }))
+      );
+      toast.success("All accounts synced");
+      return;
+    }
+
+    for (const account of accounts) {
+      await handleSync(account.id);
+    }
     toast.success("All accounts synced");
   };
 
-  const handleDelete = (id: string) => {
-    setAccounts((prev) => prev.filter((acc) => acc.id !== id));
+  const handleDelete = async (id: string) => {
+    if (demo) {
+      setAccounts((prev) => prev.filter((acc) => acc.id !== id));
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/accounts/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setAccounts((prev) => prev.filter((acc) => acc.id !== id));
+        toast.success("Account deleted");
+      } else {
+        toast.error("Failed to delete account");
+      }
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      toast.error("Failed to delete account");
+    }
   };
 
   const openEdit = (id: string) => {
@@ -179,6 +326,22 @@ export default function AccountsPage() {
       setEditDialogOpen(true);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Trading Accounts</h2>
+            <p className="text-muted-foreground">Manage your funded trading accounts across different platforms.</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          Loading accounts...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

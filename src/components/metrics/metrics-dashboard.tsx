@@ -16,6 +16,7 @@ import {
 } from "@/components/metrics/account-comparison-table";
 import { DateRangePicker, DateRange } from "@/components/metrics/date-range-picker";
 import { formatCurrency } from "@/lib/utils";
+import { isDemoMode } from "@/lib/demo-mode";
 import {
   DollarSign,
   Target,
@@ -130,6 +131,7 @@ const mockAccountMetrics: AccountMetricRow[] = [
 ];
 
 export function MetricsDashboard() {
+  const demo = isDemoMode();
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
   const [accountMetrics, setAccountMetrics] = useState<AccountMetricRow[]>([]);
@@ -148,23 +150,24 @@ export function MetricsDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        // If data is effectively empty (no real trades), use mock data
+        // If data is effectively empty (no real trades)
         if (data.metrics?.totalTrades === 0 && data.accountCount === 0) {
-          setMetrics(mockMetricsData);
+          // In demo mode, use mock data; in production, show empty state
+          setMetrics(demo ? mockMetricsData : null);
         } else {
           setMetrics(data);
         }
       } else {
-        // Fallback to mock data
-        setMetrics(mockMetricsData);
+        // In demo mode, fallback to mock data; in production, show empty state
+        setMetrics(demo ? mockMetricsData : null);
       }
     } catch (error) {
-      console.error("Failed to fetch metrics, using mock data:", error);
-      setMetrics(mockMetricsData);
+      console.error("Failed to fetch metrics:", error);
+      setMetrics(demo ? mockMetricsData : null);
     } finally {
       setLoading(false);
     }
-  }, [dateRange]);
+  }, [dateRange, demo]);
 
   const fetchAccountMetrics = useCallback(async () => {
     try {
@@ -175,7 +178,7 @@ export function MetricsDashboard() {
 
       const accountsRes = await fetch(`/api/accounts?${params.toString()}`);
       if (!accountsRes.ok) {
-        setAccountMetrics(mockAccountMetrics);
+        setAccountMetrics(demo ? mockAccountMetrics : []);
         return;
       }
 
@@ -183,7 +186,7 @@ export function MetricsDashboard() {
       const accounts = accountsData.accounts || [];
 
       if (accounts.length === 0) {
-        setAccountMetrics(mockAccountMetrics);
+        setAccountMetrics(demo ? mockAccountMetrics : []);
         return;
       }
 
@@ -210,12 +213,12 @@ export function MetricsDashboard() {
           // Skip failed account metrics
         }
       }
-      setAccountMetrics(accountRows.length > 0 ? accountRows : mockAccountMetrics);
+      setAccountMetrics(accountRows.length > 0 ? accountRows : (demo ? mockAccountMetrics : []));
     } catch (error) {
-      console.error("Failed to fetch account metrics, using mock data:", error);
-      setAccountMetrics(mockAccountMetrics);
+      console.error("Failed to fetch account metrics:", error);
+      setAccountMetrics(demo ? mockAccountMetrics : []);
     }
-  }, [dateRange]);
+  }, [dateRange, demo]);
 
   useEffect(() => {
     fetchMetrics();
@@ -234,7 +237,9 @@ export function MetricsDashboard() {
     })) || [];
 
   // Static deterministic time-series data for profit factor and win rate
+  // Only shown when metrics data exists (demo or real data)
   const profitFactorData = useMemo(() => {
+    if (!metrics) return [];
     const values = [
       1.82, 1.91, 1.85, 1.97, 2.03, 1.95, 2.08, 2.14, 2.01, 1.93,
       2.05, 2.12, 2.18, 2.25, 2.10, 2.03, 2.15, 2.22, 2.30, 2.17,
@@ -249,9 +254,10 @@ export function MetricsDashboard() {
         profitFactor,
       };
     });
-  }, []);
+  }, [metrics]);
 
   const winRateData = useMemo(() => {
+    if (!metrics) return [];
     const values = [
       0.600, 0.615, 0.608, 0.622, 0.635, 0.628, 0.641, 0.650, 0.637, 0.625,
       0.640, 0.652, 0.660, 0.672, 0.658, 0.645, 0.661, 0.670, 0.680, 0.668,
@@ -266,9 +272,10 @@ export function MetricsDashboard() {
         winRate,
       };
     });
-  }, []);
+  }, [metrics]);
 
   const calendarData = useMemo(() => {
+    if (!metrics) return [];
     const pnlValues = [
       150, -75, 300, 200, -50, 0, 0,
       425, -125, 350, 175, -200, 0, 0,
@@ -293,7 +300,7 @@ export function MetricsDashboard() {
       });
     }
     return data;
-  }, []);
+  }, [metrics]);
 
   return (
     <div className="space-y-6">
@@ -310,6 +317,14 @@ export function MetricsDashboard() {
           {loading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               Loading metrics...
+            </div>
+          ) : !metrics ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+              <p className="text-lg font-medium">No metrics data available</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Metrics will appear here once your trading accounts have recorded trades.
+                Connect and sync your accounts to get started.
+              </p>
             </div>
           ) : (
             <>
@@ -427,14 +442,23 @@ export function MetricsDashboard() {
         </TabsContent>
 
         <TabsContent value="by-account" className="space-y-6 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Comparison</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AccountComparisonTable accounts={accountMetrics} />
-            </CardContent>
-          </Card>
+          {accountMetrics.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+              <p className="text-lg font-medium">No account data available</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Add and sync your trading accounts to see per-account metrics comparison.
+              </p>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Comparison</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AccountComparisonTable accounts={accountMetrics} />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="sessions" className="space-y-6 mt-4">

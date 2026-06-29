@@ -1,0 +1,39 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Create a shared utility for NEXT_PUBLIC_DEMO_MODE detection on client-side, and update all client components to conditionally show mock data (only in demo mode) or start with empty state and fetch from API (in production mode). Also fix the settings page to show a Tradovate credentials dialog instead of just toggling connection status.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1: Create src/lib/demo-mode.ts with a helper function isDemoMode() that checks process.env.NEXT_PUBLIC_DEMO_MODE === 'true'. This will be imported by all client components to determine behavior.",
+    "Step 2: Update .env.example to add NEXT_PUBLIC_DEMO_MODE=true alongside the existing DEMO_MODE=true, with a comment explaining that NEXT_PUBLIC_ prefix is needed for client-side access.",
+    "Step 3: Fix src/components/dashboard/dashboard-overview.tsx - Import isDemoMode. If NOT demo mode: initialize metrics state with null (not mock), recentTrades with empty array, groupCount with 0. Show a loading state while fetching. On fetch, if API returns empty data (no trades, no accounts), show an empty state message like 'Connect your trading accounts to see metrics here'. Remove the logic that falls back to mock data when API returns empty results. If IS demo mode: keep current behavior with mock data.",
+    "Step 4: Fix src/app/accounts/page.tsx - Import isDemoMode. If NOT demo mode: initialize accounts with empty array [], add a useEffect that fetches from /api/accounts and sets state. The handleCreate/handleEdit/handleDelete/handleSync functions should call the API (POST /api/accounts, PUT /api/accounts/[id], DELETE /api/accounts/[id], POST /api/accounts/[id]/sync). If IS demo mode: keep current mock behavior with sampleAccounts.",
+    "Step 5: Fix src/app/accounts/[id]/page.tsx - Import isDemoMode. If NOT demo mode: initialize with null/empty states, fetch from /api/accounts/[id] for account details and use the response data. Show loading while fetching. If IS demo mode: keep current sample data.",
+    "Step 6: Fix src/app/groups/page.tsx - Import isDemoMode. If NOT demo mode: initialize groups with empty array, add useEffect to fetch from /api/groups. The handleCreate/handleToggle/handleDelete should call the API. The sampleAccounts for group creation should be fetched from /api/accounts. If IS demo mode: keep current mock behavior.",
+    "Step 7: Fix src/app/groups/[id]/page.tsx - Import isDemoMode. If NOT demo mode: initialize with null/empty, fetch group details from /api/groups/[id]. Fetch members from /api/groups/[id]/members. Show loading while fetching. If IS demo mode: keep current sample data.",
+    "Step 8: Fix src/components/trades/trades-page.tsx - Import isDemoMode. If NOT demo mode: initialize trades with empty array, add useEffect to fetch trades from API (the trades are stored in the DB via the Trade model, can be fetched through accounts). Show empty state when no trades. If IS demo mode: keep current mockTrades.",
+    "Step 9: Fix src/components/metrics/metrics-dashboard.tsx - Import isDemoMode. The component already fetches from API but falls back to mockMetricsData when API returns empty or errors. Fix: when NOT demo mode, if API returns empty data (totalTrades === 0), show an empty state message instead of mock data. Remove all fallbacks to mock data in non-demo mode. Also fix profitFactorData, winRateData, calendarData to be empty when not demo mode and no real data exists.",
+    "Step 10: Fix src/components/metrics/session-metrics.tsx - Import isDemoMode. If NOT demo mode: show empty state saying 'Session metrics will appear as trades are recorded'. If IS demo mode: keep mockSessionData.",
+    "Step 11: Fix src/components/finances/finances-page.tsx - Import isDemoMode. If NOT demo mode: initialize transactions from localStorage only (do NOT use initialTransactions as fallback unless localStorage is empty AND demo mode is on). If IS demo mode: keep initialTransactions as fallback. This ensures a fresh user in production mode starts with an empty transaction list.",
+    "Step 12: Fix src/app/settings/page.tsx - The platform connection buttons currently just toggle status in local state. When NOT demo mode and user clicks 'Connect' on Tradovate: show a dialog asking for Tradovate username (apiKey) and password (apiSecret), with a note that Tradovate demo accounts are free at demo.tradovateapi.com. On submit, attempt to authenticate using the TradovateAdapter to verify credentials work. Show success/failure feedback. For NinjaTrader and Rithmic, show a 'Coming Soon' toast. When IS demo mode: keep current behavior.",
+    "Step 13: Verify that the Tradovate adapter in src/lib/trading/tradovate.ts uses demo.tradovateapi.com by default (which it does). Add a brief comment in the settings dialog explaining that Tradovate offers free demo accounts at https://trader.tradovate.com - users can sign up for a demo account to test the connection."
+  ],
+  "acceptance_criteria": [
+    "When NEXT_PUBLIC_DEMO_MODE is not set or set to 'false', all pages start with empty states (no fake data visible)",
+    "When NEXT_PUBLIC_DEMO_MODE is 'true', all pages show mock/sample data as before (backwards compatible)",
+    "In production mode, the accounts page fetches from /api/accounts and displays real data",
+    "In production mode, the groups page fetches from /api/groups and displays real data",
+    "In production mode, the metrics dashboard shows empty state when no data, not mock data",
+    "In production mode, the trades page shows empty state when no trades exist",
+    "The settings page Tradovate Connect button opens a credentials dialog in production mode",
+    "The credentials dialog explains that Tradovate demo accounts are free",
+    "pnpm build succeeds without TypeScript errors",
+    "pnpm test passes all existing tests"
+  ],
+  "verification": [
+    "Run pnpm build and confirm it succeeds",
+    "Run pnpm test and confirm all tests pass"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

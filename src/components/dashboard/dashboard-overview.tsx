@@ -8,6 +8,7 @@ import { EquityCurveChart } from "@/components/metrics/equity-curve-chart";
 import { WinRateGauge } from "@/components/dashboard/win-rate-gauge";
 import { ProfitFactorGauge } from "@/components/dashboard/profit-factor-gauge";
 import { formatCurrency } from "@/lib/utils";
+import { isDemoMode } from "@/lib/demo-mode";
 import {
   DollarSign,
   Wallet,
@@ -134,12 +135,18 @@ const cardVariants = {
 };
 
 export function DashboardOverview() {
-  // Initialize with mock data directly - never show zeros
-  const [metrics, setMetrics] = useState<DashboardMetrics>(mockMetrics);
-  const [recentTrades, setRecentTrades] = useState<RecentTrade[]>(mockRecentTrades);
-  const [groupCount, setGroupCount] = useState(2);
+  const demo = isDemoMode();
+
+  // In demo mode: initialize with mock data directly
+  // In production mode: initialize with null/empty and fetch from API
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(demo ? mockMetrics : null);
+  const [recentTrades, _setRecentTrades] = useState<RecentTrade[]>(demo ? mockRecentTrades : []);
+  const [groupCount, setGroupCount] = useState(demo ? 2 : 0);
+  const [loading, setLoading] = useState(!demo);
 
   useEffect(() => {
+    if (demo) return; // In demo mode, skip API fetching
+
     async function fetchData() {
       try {
         const [metricsRes, groupsRes] = await Promise.all([
@@ -149,22 +156,21 @@ export function DashboardOverview() {
 
         if (metricsRes.ok) {
           const data = await metricsRes.json();
-          // Only update if the data has meaningful values
           if (data?.metrics && data.metrics.totalTrades > 0) {
             setMetrics({
               metrics: {
-                totalPnl: data.metrics.totalPnl ?? mockMetrics.metrics.totalPnl,
-                totalTrades: data.metrics.totalTrades ?? mockMetrics.metrics.totalTrades,
-                winRate: data.metrics.winRate ?? mockMetrics.metrics.winRate,
-                profitFactor: data.metrics.profitFactor ?? mockMetrics.metrics.profitFactor,
-                maxDrawdown: data.metrics.maxDrawdown ?? mockMetrics.metrics.maxDrawdown,
-                sharpeRatio: data.metrics.sharpeRatio ?? mockMetrics.metrics.sharpeRatio,
+                totalPnl: data.metrics.totalPnl ?? 0,
+                totalTrades: data.metrics.totalTrades ?? 0,
+                winRate: data.metrics.winRate ?? 0,
+                profitFactor: data.metrics.profitFactor ?? 0,
+                maxDrawdown: data.metrics.maxDrawdown ?? 0,
+                sharpeRatio: data.metrics.sharpeRatio ?? 0,
                 equityCurve: data.metrics.equityCurve?.length > 0
                   ? data.metrics.equityCurve
-                  : mockMetrics.metrics.equityCurve,
+                  : [],
               },
-              accountCount: data.accountCount ?? mockMetrics.accountCount,
-              activeAccountCount: data.activeAccountCount ?? mockMetrics.activeAccountCount,
+              accountCount: data.accountCount ?? 0,
+              activeAccountCount: data.activeAccountCount ?? 0,
             });
           }
         }
@@ -176,12 +182,43 @@ export function DashboardOverview() {
           }
         }
       } catch (error) {
-        console.error("Failed to fetch dashboard data, keeping mock data:", error);
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     }
 
     fetchData();
-  }, []);
+  }, [demo]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
+        Loading dashboard...
+      </div>
+    );
+  }
+
+  // No data available in production mode
+  if (!metrics) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <p className="text-lg font-medium">Welcome to Copy Trading</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Connect your trading accounts to see metrics here. Once your accounts are synced, your dashboard will populate with real-time data.
+          </p>
+          <Link
+            href="/accounts"
+            className="mt-4 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Wallet className="mr-2 h-4 w-4" />
+            Add Trading Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const m = metrics.metrics;
 
@@ -284,22 +321,24 @@ export function DashboardOverview() {
       </motion.div>
 
       {/* Row 3: Equity Curve (full width) */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.3 }}
-      >
-        <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-          <CardHeader className="relative">
-            <CardTitle>Equity Curve</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <EquityCurveChart data={m.equityCurve} />
-          </CardContent>
-        </Card>
-      </motion.div>
+      {m.equityCurve.length > 0 && (
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="backdrop-blur-xl bg-card/80 border-border/50 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+            <CardHeader className="relative">
+              <CardTitle>Equity Curve</CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <EquityCurveChart data={m.equityCurve} />
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Row 4: Recent Trades (full width) */}
       <motion.div

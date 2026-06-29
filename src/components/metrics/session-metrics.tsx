@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { isDemoMode } from "@/lib/demo-mode";
 
 interface SessionData {
   name: string;
@@ -40,6 +41,19 @@ const mockSessionData: SessionData[] = [
 ];
 
 export function SessionMetrics() {
+  const demo = isDemoMode();
+
+  if (!demo) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+        <p className="text-lg font-medium">Session metrics</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Session metrics will appear as trades are recorded. Data is broken down by Asian, London, and New York trading sessions.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {mockSessionData.map((session) => (

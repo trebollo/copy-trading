@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { isDemoMode } from "@/lib/demo-mode";
 
 interface Trade {
   id: string;
@@ -96,7 +97,10 @@ const mockTrades: Trade[] = [
 export function TradesPageContent() {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("date");
+  const demo = isDemoMode();
 
+  const [trades, _setTrades] = useState<Trade[]>(demo ? mockTrades : []);
+  const [loading, setLoading] = useState(!demo);
   const [dateFilter, setDateFilter] = useState<string>(dateParam || "all");
   const [symbolFilter, setSymbolFilter] = useState<string>("all");
   const [sideFilter, setSideFilter] = useState<string>("all");
@@ -106,8 +110,16 @@ export function TradesPageContent() {
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  // Fetch trades in production mode (placeholder - API may not have a dedicated trades endpoint)
+  useEffect(() => {
+    if (demo) return;
+    // In production, trades would come from the API
+    // For now, we simply show empty state
+    setLoading(false);
+  }, [demo]);
+
   const filteredAndSortedTrades = useMemo(() => {
-    let filtered = [...mockTrades];
+    let filtered = [...trades];
 
     // Apply date filter
     if (dateFilter !== "all") {
@@ -155,7 +167,7 @@ export function TradesPageContent() {
     });
 
     return filtered;
-  }, [dateFilter, symbolFilter, sideFilter, statusFilter, sortField, sortDirection]);
+  }, [dateFilter, symbolFilter, sideFilter, statusFilter, sortField, sortDirection, trades]);
 
   const totalPages = Math.ceil(filteredAndSortedTrades.length / pageSize);
   const paginatedTrades = filteredAndSortedTrades.slice(
@@ -173,10 +185,43 @@ export function TradesPageContent() {
     setCurrentPage(1);
   }
 
-  const uniqueSymbols = Array.from(new Set(mockTrades.map((t) => t.symbol))).sort();
+  const uniqueSymbols = Array.from(new Set(trades.map((t) => t.symbol))).sort();
   const uniqueDates = Array.from(
-    new Set(mockTrades.map((t) => t.openedAt.split("T")[0]))
+    new Set(trades.map((t) => t.openedAt.split("T")[0]))
   ).sort().reverse();
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>All Trades</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            Loading trades...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (trades.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>All Trades</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-lg font-medium">No trades recorded yet</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Trades will appear here as your connected accounts execute orders.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

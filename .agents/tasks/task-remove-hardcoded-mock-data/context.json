@@ -1,0 +1,33 @@
+{
+  "project_type": "Next.js 14 App Router with React 18, Prisma ORM, NextAuth, TanStack Query",
+  "language": "TypeScript/React",
+  "build_system": "pnpm with Next.js build",
+  "test_framework": "Vitest with jsdom, @testing-library/react, setup in src/test/setup.ts",
+  "build_command": "pnpm build",
+  "test_command": "pnpm test",
+  "verification_instructions": "1. Run pnpm build to ensure TypeScript compiles. 2. Run pnpm test to ensure existing tests pass.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "pnpm install && npx prisma generate",
+  "environment_constraints": "No database available for runtime testing. No Docker. Validation is via TypeScript compilation (pnpm build) and unit tests (pnpm test).",
+  "contribution_requirements": "Branch: feat/copy-trading-dashboard. Commit changes but do NOT push.",
+  "key_patterns": "Client components use 'use client' directive. DEMO_MODE is server-side env var. NEXT_PUBLIC_DEMO_MODE is needed for client components. API routes check DEMO_MODE for returning mock data. Client components currently initialize state with hardcoded mock data regardless of mode. The fix requires using NEXT_PUBLIC_DEMO_MODE on client to conditionally show mock data vs empty states with API fetching.",
+  "relevant_files": [
+    "src/components/dashboard/dashboard-overview.tsx",
+    "src/app/accounts/page.tsx",
+    "src/app/accounts/[id]/page.tsx",
+    "src/app/groups/page.tsx",
+    "src/app/groups/[id]/page.tsx",
+    "src/components/trades/trades-page.tsx",
+    "src/components/metrics/metrics-dashboard.tsx",
+    "src/components/metrics/session-metrics.tsx",
+    "src/components/finances/finances-page.tsx",
+    "src/app/settings/page.tsx",
+    "src/lib/trading/tradovate.ts",
+    "src/app/api/accounts/route.ts",
+    "src/app/api/groups/route.ts",
+    "src/app/api/metrics/route.ts",
+    "next.config.mjs",
+    ".env.example"
+  ],
+  "directory_structure": "src/app/ - Next.js pages and API routes. src/components/ - React components (dashboard, accounts, groups, trades, metrics, finances, shared, ui). src/lib/ - Utilities, auth, prisma, trading adapters, validations. src/test/ - Vitest test files. prisma/ - Schema and seed."
+}

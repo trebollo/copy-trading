@@ -27,6 +27,7 @@ import {
   TransactionType,
   TransactionCategory,
 } from "./add-transaction-dialog";
+import { isDemoMode } from "@/lib/demo-mode";
 
 interface Transaction {
   id: string;
@@ -162,16 +163,17 @@ const periodOptions: { value: PeriodFilter; label: string }[] = [
 ];
 
 function loadTransactions(): Transaction[] {
-  if (typeof window === "undefined") return initialTransactions;
+  if (typeof window === "undefined") return isDemoMode() ? initialTransactions : [];
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       return JSON.parse(saved) as Transaction[];
     }
   } catch {
-    // Fallback to initial data
+    // Fallback
   }
-  return initialTransactions;
+  // Only use initialTransactions as fallback in demo mode
+  return isDemoMode() ? initialTransactions : [];
 }
 
 function getFilteredByPeriod(
@@ -212,7 +214,7 @@ function computeTotals(transactions: Transaction[]) {
 
 export function FinancesPageContent() {
   const [transactions, setTransactions] =
-    useState<Transaction[]>(initialTransactions);
+    useState<Transaction[]>(isDemoMode() ? initialTransactions : []);
   const [filterType, setFilterType] = useState<"all" | TransactionType>("all");
   const [filterPeriod, setFilterPeriod] = useState<PeriodFilter>("all_time");
   const [dialogOpen, setDialogOpen] = useState(false);

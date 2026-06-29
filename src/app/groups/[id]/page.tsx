@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Settings, Plus, Check, X, TrendingUp, BarChart3, Target, Percent } from "lucide-react";
@@ -31,8 +31,9 @@ import {
 import { DailyPnlChart } from "@/components/metrics/daily-pnl-chart";
 import { formatCurrency } from "@/lib/utils";
 import { TradingPlatform } from "@/lib/trading/types";
+import { isDemoMode } from "@/lib/demo-mode";
 
-// Sample data for group detail
+// Sample data for group detail (demo mode)
 const sampleGroup = {
   id: "g1",
   name: "ES Scalping Group",
@@ -90,7 +91,7 @@ const sampleAvailableAccounts = [
 ];
 
 // Group daily PnL mock data (15 days, sum of all followers' PnL)
-const groupDailyPnl = [
+const groupDailyPnlDemo = [
   { date: "2024-01-01", pnl: 325.50 },
   { date: "2024-01-02", pnl: -125.00 },
   { date: "2024-01-03", pnl: 450.75 },
@@ -158,22 +159,105 @@ const platformLabels: Record<string, string> = {
   [TradingPlatform.RITHMIC]: "Rithmic",
 };
 
+interface GroupData {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  masterAccount: {
+    id: string;
+    name: string;
+    platform: string;
+    status: string;
+  };
+  createdAt: string;
+}
+
 export default function GroupDetailPage() {
   const params = useParams();
   const groupId = params.id as string;
-  const [group, setGroup] = useState({ ...sampleGroup, id: groupId || sampleGroup.id });
-  const [members, setMembers] = useState<MemberRiskData[]>(sampleMembers);
-  const [activity] = useState<CopyActivityEvent[]>(sampleActivity);
+  const demo = isDemoMode();
+
+  const [group, setGroup] = useState<GroupData | null>(
+    demo ? { ...sampleGroup, id: groupId || sampleGroup.id } : null
+  );
+  const [members, setMembers] = useState<MemberRiskData[]>(demo ? sampleMembers : []);
+  const [activity] = useState<CopyActivityEvent[]>(demo ? sampleActivity : []);
+  const [availableAccounts, setAvailableAccounts] = useState(demo ? sampleAvailableAccounts : []);
+  const [groupDailyPnl, _setGroupDailyPnl] = useState(demo ? groupDailyPnlDemo : []);
+  const [loading, setLoading] = useState(!demo);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
 
   // Edit group form state
-  const [editName, setEditName] = useState(group.name);
-  const [editDescription, setEditDescription] = useState(group.description || "");
+  const [editName, setEditName] = useState(group?.name || "");
+  const [editDescription, setEditDescription] = useState(group?.description || "");
+
+  // Fetch group data from API in production mode
+  useEffect(() => {
+    if (demo) return;
+
+    async function fetchGroupData() {
+      try {
+        const [groupRes, membersRes, accountsRes] = await Promise.all([
+          fetch(`/api/groups/${groupId}`),
+          fetch(`/api/groups/${groupId}/members`),
+          fetch("/api/accounts?limit=100"),
+        ]);
+
+        if (groupRes.ok) {
+          const data = await groupRes.json();
+          setGroup({
+            id: data.id,
+            name: data.name,
+            description: data.description || "",
+            isActive: data.isActive ?? true,
+            masterAccount: data.masterAccount || { id: "", name: "Unknown", platform: "Unknown", status: "unknown" },
+            createdAt: data.createdAt,
+          });
+          setEditName(data.name);
+          setEditDescription(data.description || "");
+        }
+
+        if (membersRes.ok) {
+          const data = await membersRes.json();
+          const fetchedMembers: MemberRiskData[] = (data.members || data || []).map((m: Record<string, unknown>) => ({
+            id: m.id as string,
+            accountId: m.accountId as string,
+            accountName: (m.accountName as string) || "Unknown",
+            accountPlatform: (m.accountPlatform as string) || "Unknown",
+            riskMultiplier: (m.riskMultiplier as number) || 1.0,
+            maxLots: (m.maxLots as number) || 10,
+            maxDailyLoss: (m.maxDailyLoss as number) || 1000,
+            maxDailyProfit: (m.maxDailyProfit as number) || 3000,
+            isActive: (m.isActive as boolean) ?? true,
+          }));
+          setMembers(fetchedMembers);
+        }
+
+        if (accountsRes.ok) {
+          const data = await accountsRes.json();
+          const allAccounts = (data.accounts || []).map((acc: Record<string, unknown>) => ({
+            id: acc.id as string,
+            name: acc.name as string,
+            platform: acc.platform as string,
+          }));
+          setAvailableAccounts(allAccounts);
+        }
+      } catch (error) {
+        console.error("Failed to fetch group data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchGroupData();
+  }, [demo, groupId]);
 
   const handleToggleGroup = () => {
+    if (!group) return;
     const wasActive = group.isActive;
-    setGroup((prev) => ({ ...prev, isActive: !prev.isActive }));
+    setGroup((prev) => prev ? { ...prev, isActive: !prev.isActive } : prev);
     toast.success(wasActive ? "Group deactivated" : "Group activated");
   };
 
@@ -193,17 +277,18 @@ export default function GroupDetailPage() {
   };
 
   const handleEditGroup = () => {
+    if (!group) return;
     setEditName(group.name);
     setEditDescription(group.description || "");
     setEditDialogOpen(true);
   };
 
   const handleSaveGroup = () => {
-    setGroup((prev) => ({
+    setGroup((prev) => prev ? {
       ...prev,
       name: editName.trim(),
       description: editDescription.trim() || prev.description,
-    }));
+    } : prev);
     setEditDialogOpen(false);
     toast.success("Group updated");
   };
@@ -225,10 +310,47 @@ export default function GroupDetailPage() {
     toast.success("Member added");
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href="/groups">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            Loading group details...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!group) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href="/groups">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Group not found</h2>
+            <p className="text-sm text-muted-foreground">
+              This group could not be loaded.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const activeMembers = members.filter((m) => m.isActive).length;
   const inactiveMembers = members.filter((m) => !m.isActive).length;
 
-  // Derive stats from mock data
+  // Derive stats from data
   const totalPnl = groupDailyPnl.reduce((sum, d) => sum + d.pnl, 0);
   const avgRiskMultiplier = members.length > 0
     ? members.reduce((sum, m) => sum + m.riskMultiplier, 0) / members.length
@@ -237,8 +359,7 @@ export default function GroupDetailPage() {
   const winRate = groupDailyPnl.length > 0
     ? Math.round((winningDays / groupDailyPnl.length) * 100)
     : 0;
-  // Trades today is static since there's no individual trades data
-  const tradesToday = 12;
+  const tradesToday = demo ? 12 : 0;
 
   return (
     <div className="space-y-6">
@@ -321,64 +442,82 @@ export default function GroupDetailPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <BarChart3 className="h-5 w-5 text-blue-500" />
-                <p className="text-2xl font-bold">{tradesToday}</p>
+        {(demo || tradesToday > 0) && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <BarChart3 className="h-5 w-5 text-blue-500" />
+                  <p className="text-2xl font-bold">{tradesToday}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Total Trades Today</p>
               </div>
-              <p className="text-sm text-muted-foreground">Total Trades Today</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <Target className="h-5 w-5 text-orange-500" />
-                <p className="text-2xl font-bold">{avgRiskMultiplier.toFixed(1)}x</p>
+            </CardContent>
+          </Card>
+        )}
+        {members.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <Target className="h-5 w-5 text-orange-500" />
+                  <p className="text-2xl font-bold">{avgRiskMultiplier.toFixed(1)}x</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Avg Risk Multiplier</p>
               </div>
-              <p className="text-sm text-muted-foreground">Avg Risk Multiplier</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <Percent className="h-5 w-5 text-purple-500" />
-                <p className="text-2xl font-bold">{winRate}%</p>
+            </CardContent>
+          </Card>
+        )}
+        {groupDailyPnl.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <Percent className="h-5 w-5 text-purple-500" />
+                  <p className="text-2xl font-bold">{winRate}%</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Win Rate</p>
               </div>
-              <p className="text-sm text-muted-foreground">Win Rate</p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Group Daily PnL */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Group Daily PnL</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-3 mb-6">
-            <div className="text-center rounded-lg border p-3">
-              <p className={`text-lg font-bold ${groupDailyPnl[groupDailyPnl.length - 1]?.pnl >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(groupDailyPnl[groupDailyPnl.length - 1]?.pnl ?? 0)}</p>
-              <p className="text-xs text-muted-foreground">Today&apos;s PnL</p>
+      {groupDailyPnl.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Group Daily PnL</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3 mb-6">
+              <div className="text-center rounded-lg border p-3">
+                <p className={`text-lg font-bold ${groupDailyPnl[groupDailyPnl.length - 1]?.pnl >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(groupDailyPnl[groupDailyPnl.length - 1]?.pnl ?? 0)}</p>
+                <p className="text-xs text-muted-foreground">Today&apos;s PnL</p>
+              </div>
+              <div className="text-center rounded-lg border p-3">
+                <p className={`text-lg font-bold ${groupDailyPnl.slice(-5).reduce((s, d) => s + d.pnl, 0) >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(groupDailyPnl.slice(-5).reduce((s, d) => s + d.pnl, 0))}</p>
+                <p className="text-xs text-muted-foreground">This Week&apos;s PnL</p>
+              </div>
+              <div className="text-center rounded-lg border p-3">
+                <p className={`text-lg font-bold ${totalPnl >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(totalPnl)}</p>
+                <p className="text-xs text-muted-foreground">This Month&apos;s PnL</p>
+              </div>
             </div>
-            <div className="text-center rounded-lg border p-3">
-              <p className={`text-lg font-bold ${groupDailyPnl.slice(-5).reduce((s, d) => s + d.pnl, 0) >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(groupDailyPnl.slice(-5).reduce((s, d) => s + d.pnl, 0))}</p>
-              <p className="text-xs text-muted-foreground">This Week&apos;s PnL</p>
-            </div>
-            <div className="text-center rounded-lg border p-3">
-              <p className={`text-lg font-bold ${totalPnl >= 0 ? "text-green-500" : "text-red-500"}`}>{formatCurrency(totalPnl)}</p>
-              <p className="text-xs text-muted-foreground">This Month&apos;s PnL</p>
-            </div>
-          </div>
-          <DailyPnlChart data={groupDailyPnl} />
-        </CardContent>
-      </Card>
+            <DailyPnlChart data={groupDailyPnl} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state for production mode with no data */}
+      {!demo && groupDailyPnl.length === 0 && members.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <p className="text-lg font-medium">No activity yet</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Add follower accounts to start copying trades in this group.
+          </p>
+        </div>
+      )}
 
       {/* Members (Master + Followers) */}
       <div className="space-y-3">
@@ -413,14 +552,29 @@ export default function GroupDetailPage() {
       </div>
 
       {/* Activity Feed */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Copy Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CopyActivityFeed events={activity} />
-        </CardContent>
-      </Card>
+      {activity.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Copy Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CopyActivityFeed events={activity} />
+          </CardContent>
+        </Card>
+      )}
+
+      {!demo && activity.length === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Copy Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              Copy activity will appear here as trades are replicated across accounts.
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit Group Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -475,13 +629,13 @@ export default function GroupDetailPage() {
             <p className="text-sm text-muted-foreground">
               Select an account to add as a follower. You can configure risk settings after adding.
             </p>
-            {sampleAvailableAccounts.length === 0 ? (
+            {availableAccounts.filter((acc) => !members.some((m) => m.accountId === acc.id)).length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 No available accounts to add.
               </p>
             ) : (
               <div className="space-y-2">
-                {sampleAvailableAccounts
+                {availableAccounts
                   .filter((acc) => !members.some((m) => m.accountId === acc.id))
                   .map((account) => (
                     <div

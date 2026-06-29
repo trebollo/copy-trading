@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, RefreshCw, Pencil, Users } from "lucide-react";
@@ -21,8 +21,9 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { TradingPlatform } from "@/lib/trading/types";
 import { PnlCalendar } from "@/components/metrics/pnl-calendar";
+import { isDemoMode } from "@/lib/demo-mode";
 
-// Sample data for initial render (will be replaced by API calls)
+// Sample data for demo mode only
 const sampleTrades: TradeRow[] = [
   {
     id: "t1",
@@ -113,22 +114,108 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
   error: "destructive",
 };
 
+interface AccountData {
+  id: string;
+  name: string;
+  platform: string;
+  accountId: string;
+  balance: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function AccountDetailPage() {
   const params = useParams();
   const router = useRouter();
   const accountId = params.id as string;
-  const [account, setAccount] = useState({ ...sampleAccount, id: accountId || sampleAccount.id });
-  const [trades] = useState<TradeRow[]>(sampleTrades);
-  const [metrics] = useState<DailyMetricData[]>(sampleMetrics);
+  const demo = isDemoMode();
+
+  const [account, setAccount] = useState<AccountData | null>(
+    demo ? { ...sampleAccount, id: accountId || sampleAccount.id } : null
+  );
+  const [trades, _setTrades] = useState<TradeRow[]>(demo ? sampleTrades : []);
+  const [metrics, setMetrics] = useState<DailyMetricData[]>(demo ? sampleMetrics : []);
+  const [loading, setLoading] = useState(!demo);
+
+  useEffect(() => {
+    if (demo) return;
+
+    async function fetchAccountData() {
+      try {
+        const res = await fetch(`/api/accounts/${accountId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAccount({
+            id: data.id,
+            name: data.name,
+            platform: data.platform,
+            accountId: data.accountId,
+            balance: data.balance ?? 0,
+            status: data.status,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch account:", error);
+      }
+
+      try {
+        const metricsRes = await fetch(`/api/metrics/${accountId}`);
+        if (metricsRes.ok) {
+          const metricsData = await metricsRes.json();
+          if (metricsData.metrics?.equityCurve?.length > 0) {
+            const dailyData: DailyMetricData[] = metricsData.metrics.equityCurve.map(
+              (point: { date: string; equity: number }, i: number, arr: Array<{ date: string; equity: number }>) => ({
+                date: point.date,
+                pnl: i === 0 ? 0 : point.equity - arr[i - 1].equity,
+                trades: 0,
+              })
+            );
+            setMetrics(dailyData);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch metrics:", error);
+      }
+
+      setLoading(false);
+    }
+
+    fetchAccountData();
+  }, [demo, accountId]);
 
   const totalPnl = trades.reduce(
     (sum, trade) => sum + (trade.pnl || 0),
     0
   );
 
-  const handleSync = () => {
-    setAccount((prev) => ({ ...prev, updatedAt: new Date().toISOString() }));
-    toast.success("Account synced successfully");
+  const handleSync = async () => {
+    if (!account) return;
+    if (demo) {
+      setAccount((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
+      toast.success("Account synced successfully");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/accounts/${accountId}/sync`, { method: "POST" });
+      if (res.ok) {
+        const synced = await res.json();
+        setAccount((prev) => prev ? {
+          ...prev,
+          balance: synced.balance ?? prev.balance,
+          updatedAt: synced.updatedAt ?? new Date().toISOString(),
+        } : prev);
+        toast.success("Account synced successfully");
+      } else {
+        toast.error("Failed to sync account");
+      }
+    } catch (error) {
+      console.error("Sync failed:", error);
+      toast.error("Failed to sync account");
+    }
   };
 
   const handleEditSettings = () => {
@@ -139,6 +226,43 @@ export default function AccountDetailPage() {
     router.push("/groups");
     toast.info("Navigating to groups...");
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href="/accounts">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            Loading account details...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!account) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href="/accounts">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Account not found</h2>
+            <p className="text-sm text-muted-foreground">
+              This account could not be loaded.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -160,7 +284,7 @@ export default function AccountDetailPage() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              {platformLabels[account.platform]} - {account.accountId}
+              {platformLabels[account.platform] || account.platform} - {account.accountId}
             </p>
           </div>
         </div>
@@ -235,24 +359,28 @@ export default function AccountDetailPage() {
       </div>
 
       {/* PnL Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>PnL Over Time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AccountPnlChart data={metrics} />
-        </CardContent>
-      </Card>
+      {metrics.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>PnL Over Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AccountPnlChart data={metrics} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* PnL Calendar */}
-      <Card>
-        <CardHeader>
-          <CardTitle>PnL Calendar</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PnlCalendar data={metrics} />
-        </CardContent>
-      </Card>
+      {metrics.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>PnL Calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PnlCalendar data={metrics} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Trades Table */}
       <Card>
@@ -260,7 +388,13 @@ export default function AccountDetailPage() {
           <CardTitle>Recent Trades</CardTitle>
         </CardHeader>
         <CardContent>
-          <TradesTable trades={trades} />
+          {trades.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              No trades recorded yet. Trades will appear here after account sync.
+            </div>
+          ) : (
+            <TradesTable trades={trades} />
+          )}
         </CardContent>
       </Card>
     </div>
