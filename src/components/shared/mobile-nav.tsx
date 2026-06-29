@@ -7,7 +7,6 @@ import {
   Wallet,
   Users,
   BarChart3,
-  Settings,
   ScrollText,
   Receipt,
 } from "lucide-react";
@@ -20,11 +19,14 @@ const navItems = [
   { href: "/trades", label: "Trades", icon: ScrollText },
   { href: "/metrics", label: "Metrics", icon: BarChart3 },
   { href: "/finances", label: "Finances", icon: Receipt },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
+
+  // Hide on auth/landing pages
+  const isAuthPage = pathname === "/" || pathname === "/login";
+  if (isAuthPage) return null;
 
   return (
     <nav

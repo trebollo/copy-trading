@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/shared/providers";
+import { MobileNav } from "@/components/shared/mobile-nav";
 
 export const metadata: Metadata = {
   title: "CopyTrader - Trading Account Management Dashboard",
@@ -17,6 +18,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
         <Providers>{children}</Providers>
+        <MobileNav />
       </body>
     </html>
   );
