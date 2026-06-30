@@ -9,22 +9,44 @@ import {
   Bell,
   Link2,
   SlidersHorizontal,
-  CheckCircle,
   XCircle,
   RefreshCw,
   Save,
   Loader2,
   Shield,
   Info,
-  Wifi,
-  WifiOff,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { isDemoMode } from "@/lib/demo-mode";
+import {
+  TradovateConnection,
+  getConnections,
+  addConnection,
+  updateConnection,
+  removeConnection,
+} from "@/lib/trading/connection-store";
 
 interface NotificationSettings {
   tradeCopied: boolean;
@@ -36,15 +58,6 @@ interface Preferences {
   defaultRiskMultiplier: string;
   timezone: string;
 }
-
-interface TradovateCredentials {
-  username: string;
-  environment: "demo" | "live";
-  connected: boolean;
-  lastSync: string | null;
-}
-
-const TRADOVATE_CREDENTIALS_KEY = "tradovate-credentials";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -63,30 +76,24 @@ export default function SettingsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const demo = isDemoMode();
+  const _demo = isDemoMode();
 
-  // Tradovate state
-  const [tradovateUsername, setTradovateUsername] = useState("");
-  const [tradovatePassword, setTradovatePassword] = useState("");
-  const [tradovateEnvironment, setTradovateEnvironment] = useState<"demo" | "live">("demo");
-  const [tradovateConnected, setTradovateConnected] = useState(false);
-  const [tradovateLastSync, setTradovateLastSync] = useState<string | null>(null);
-  const [tradovateConnecting, setTradovateConnecting] = useState(false);
-  const [tradovateSaving, setTradovateSaving] = useState(false);
+  // Connection management state
+  const [connections, setConnections] = useState<TradovateConnection[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingConnection, setEditingConnection] =
+    useState<TradovateConnection | null>(null);
+  const [dialogLabel, setDialogLabel] = useState("");
+  const [dialogUsername, setDialogUsername] = useState("");
+  const [dialogPassword, setDialogPassword] = useState("");
+  const [dialogEnvironment, setDialogEnvironment] = useState<"demo" | "live">(
+    "demo"
+  );
+  const [dialogConnecting, setDialogConnecting] = useState(false);
+  const [dialogError, setDialogError] = useState("");
 
-  const loadTradovateCredentials = useCallback(() => {
-    try {
-      const saved = localStorage.getItem(TRADOVATE_CREDENTIALS_KEY);
-      if (saved) {
-        const creds: TradovateCredentials = JSON.parse(saved);
-        setTradovateUsername(creds.username || "");
-        setTradovateEnvironment(creds.environment || "demo");
-        setTradovateConnected(creds.connected || false);
-        setTradovateLastSync(creds.lastSync || null);
-      }
-    } catch {
-      // Use defaults
-    }
+  const loadConnections = useCallback(() => {
+    setConnections(getConnections());
   }, []);
 
   const loadPreferences = useCallback(async () => {
@@ -105,7 +112,6 @@ export default function SettingsPage() {
           timezone: prefs.timezone,
         });
       } else {
-        // Fallback: load from localStorage
         const saved = localStorage.getItem("copy-trading-settings");
         if (saved) {
           const prefs = JSON.parse(saved);
@@ -121,7 +127,6 @@ export default function SettingsPage() {
         }
       }
     } catch {
-      // Fallback: load from localStorage
       const saved = localStorage.getItem("copy-trading-settings");
       if (saved) {
         try {
@@ -146,8 +151,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadPreferences();
-    loadTradovateCredentials();
-  }, [loadPreferences, loadTradovateCredentials]);
+    loadConnections();
+  }, [loadPreferences, loadConnections]);
 
   const savePreferences = async () => {
     setIsSaving(true);
@@ -169,12 +174,10 @@ export default function SettingsPage() {
       if (response.ok) {
         toast.success("Settings saved successfully");
       } else {
-        // Fallback to localStorage in demo mode
         localStorage.setItem("copy-trading-settings", JSON.stringify(settingsData));
         toast.success("Settings saved locally");
       }
     } catch {
-      // Fallback to localStorage when API is unavailable
       localStorage.setItem("copy-trading-settings", JSON.stringify(settingsData));
       toast.success("Settings saved locally");
     } finally {
@@ -182,81 +185,109 @@ export default function SettingsPage() {
     }
   };
 
-  const handleTradovateTestConnection = async () => {
-    if (!tradovateUsername.trim() || !tradovatePassword.trim()) {
-      toast.error("Please enter both username and password");
+  // --- Connection Dialog Handlers ---
+
+  const openAddDialog = () => {
+    setEditingConnection(null);
+    setDialogLabel("");
+    setDialogUsername("");
+    setDialogPassword("");
+    setDialogEnvironment("demo");
+    setDialogError("");
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (conn: TradovateConnection) => {
+    setEditingConnection(conn);
+    setDialogLabel(conn.label);
+    setDialogUsername(conn.username);
+    setDialogPassword("");
+    setDialogEnvironment(conn.environment);
+    setDialogError("");
+    setDialogOpen(true);
+  };
+
+  const handleTestAndConnect = async () => {
+    if (!dialogLabel.trim()) {
+      setDialogError("Please enter a label for this connection");
+      return;
+    }
+    if (!dialogUsername.trim()) {
+      setDialogError("Please enter a username");
+      return;
+    }
+    if (!dialogPassword.trim()) {
+      setDialogError("Please enter a password");
       return;
     }
 
-    setTradovateConnecting(true);
+    setDialogConnecting(true);
+    setDialogError("");
+
     try {
       const response = await fetch("/api/tradovate/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: tradovateUsername.trim(),
-          password: tradovatePassword.trim(),
-          environment: tradovateEnvironment,
+          username: dialogUsername.trim(),
+          password: dialogPassword.trim(),
+          environment: dialogEnvironment,
         }),
       });
 
-      if (response.ok) {
-        const now = new Date().toLocaleString();
-        setTradovateConnected(true);
-        setTradovateLastSync(now);
-
-        // Save connection state to localStorage (without password)
-        const creds: TradovateCredentials = {
-          username: tradovateUsername.trim(),
-          environment: tradovateEnvironment,
-          connected: true,
-          lastSync: now,
-        };
-        localStorage.setItem(TRADOVATE_CREDENTIALS_KEY, JSON.stringify(creds));
-        toast.success("Tradovate connected successfully! All accounts under this login are now accessible.");
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
-        setTradovateConnected(false);
-        toast.error(`Connection failed: ${errorData.error || "Invalid credentials"}`);
+        setDialogError(errorData.error || "Authentication failed");
+        setDialogConnecting(false);
+        return;
       }
+
+      const data = await response.json();
+      const accounts = data.accounts || [];
+      const now = new Date().toISOString();
+
+      if (editingConnection) {
+        updateConnection(editingConnection.id, {
+          label: dialogLabel.trim(),
+          username: dialogUsername.trim(),
+          environment: dialogEnvironment,
+          status: "connected",
+          lastSync: now,
+          accounts,
+        });
+        toast.success(`"${dialogLabel.trim()}" updated and connected`);
+      } else {
+        addConnection({
+          label: dialogLabel.trim(),
+          username: dialogUsername.trim(),
+          environment: dialogEnvironment,
+          status: "connected",
+          lastSync: now,
+          accounts,
+        });
+        toast.success(`"${dialogLabel.trim()}" added and connected`);
+      }
+
+      loadConnections();
+      setDialogOpen(false);
     } catch {
-      toast.error("Unable to reach Tradovate. Please check your network and try again.");
+      setDialogError(
+        "Unable to reach Tradovate. Please check your network and try again."
+      );
     } finally {
-      setTradovateConnecting(false);
+      setDialogConnecting(false);
     }
   };
 
-  const handleTradovateSaveCredentials = () => {
-    if (!tradovateUsername.trim()) {
-      toast.error("Please enter a username");
-      return;
-    }
-
-    setTradovateSaving(true);
-    try {
-      const creds: TradovateCredentials = {
-        username: tradovateUsername.trim(),
-        environment: tradovateEnvironment,
-        connected: tradovateConnected,
-        lastSync: tradovateLastSync,
-      };
-      localStorage.setItem(TRADOVATE_CREDENTIALS_KEY, JSON.stringify(creds));
-      toast.success("Tradovate credentials saved");
-    } catch {
-      toast.error("Failed to save credentials");
-    } finally {
-      setTradovateSaving(false);
-    }
+  const handleReconnect = async (conn: TradovateConnection) => {
+    // Open edit dialog so user can re-enter password
+    openEditDialog(conn);
   };
 
-  const handleTradovateDisconnect = () => {
-    setTradovateUsername("");
-    setTradovatePassword("");
-    setTradovateConnected(false);
-    setTradovateLastSync(null);
-    setTradovateEnvironment("demo");
-    localStorage.removeItem(TRADOVATE_CREDENTIALS_KEY);
-    toast.success("Tradovate disconnected. Credentials cleared.");
+  const handleRemoveConnection = (conn: TradovateConnection) => {
+    removeConnection(conn.id);
+    loadConnections();
+    toast.success(`"${conn.label}" removed`);
   };
 
   const handleNotificationChange = (key: keyof NotificationSettings) => {
@@ -265,6 +296,17 @@ export default function SettingsPage() {
 
   const handlePreferenceChange = (key: keyof Preferences, value: string | boolean) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const getStatusDot = (status: TradovateConnection["status"]) => {
+    switch (status) {
+      case "connected":
+        return "bg-green-500";
+      case "error":
+        return "bg-red-500";
+      default:
+        return "bg-gray-400";
+    }
   };
 
   if (isLoading) {
@@ -375,171 +417,124 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Tradovate API Configuration Section */}
+      {/* Tradovate Connections Section */}
       <section aria-labelledby="tradovate-heading" className="rounded-lg border bg-card p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-            <h3 id="tradovate-heading" className="text-lg font-semibold">Tradovate API Configuration</h3>
+            <h3 id="tradovate-heading" className="text-lg font-semibold">
+              Tradovate Connections
+            </h3>
           </div>
-          <div className="flex items-center gap-2">
-            {tradovateConnected ? (
-              <>
-                <Wifi className="h-4 w-4 text-green-500" aria-hidden="true" />
-                <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-200">
-                  Connected
-                </Badge>
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                <Badge variant="outline" className="text-muted-foreground">
-                  Disconnected
-                </Badge>
-              </>
-            )}
-          </div>
+          <Button size="sm" onClick={openAddDialog}>
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+            Add Connection
+          </Button>
         </div>
+        <p className="text-sm text-muted-foreground mb-6">
+          Manage connections for each prop firm account
+        </p>
 
-        {tradovateConnected && tradovateLastSync && (
-          <p className="text-xs text-muted-foreground mb-4">
-            Last sync: {tradovateLastSync}
-          </p>
-        )}
-
-        {/* Environment Toggle */}
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Environment</label>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="tradovate-environment"
-                  value="demo"
-                  checked={tradovateEnvironment === "demo"}
-                  onChange={() => setTradovateEnvironment("demo")}
-                  className="h-4 w-4 text-primary"
-                />
-                <span className="text-sm">Demo</span>
-                <Badge variant="secondary" className="text-xs">Free</Badge>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="tradovate-environment"
-                  value="live"
-                  checked={tradovateEnvironment === "live"}
-                  onChange={() => setTradovateEnvironment("live")}
-                  className="h-4 w-4 text-primary"
-                />
-                <span className="text-sm">Live</span>
-              </label>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {tradovateEnvironment === "demo"
-                ? "Demo: https://demo.tradovateapi.com/v1 (free, no market data subscription required)"
-                : "Live: https://live.tradovateapi.com/v1 (requires Tradovate subscription for market data)"}
+        {/* Connection Cards */}
+        {connections.length === 0 ? (
+          <div className="rounded-md border border-dashed p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              No connections yet. Add a connection to get started.
             </p>
           </div>
-
-          {/* Credentials Fields */}
+        ) : (
           <div className="space-y-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="tradovate-username">
-                Username
-              </label>
-              <Input
-                id="tradovate-username"
-                value={tradovateUsername}
-                onChange={(e) => setTradovateUsername(e.target.value)}
-                placeholder="Your Tradovate username"
-                autoComplete="username"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="tradovate-password">
-                Password
-              </label>
-              <Input
-                id="tradovate-password"
-                type="password"
-                value={tradovatePassword}
-                onChange={(e) => setTradovatePassword(e.target.value)}
-                placeholder={tradovateConnected ? "********" : "Your Tradovate password"}
-                autoComplete="current-password"
-              />
-              <p className="text-xs text-muted-foreground">
-                Password is only used during connection and is not stored.
+            {connections.map((conn) => (
+              <Card key={conn.id}>
+                <CardContent className="p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`mt-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0 ${getStatusDot(conn.status)}`}
+                        aria-label={`Status: ${conn.status}`}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium truncate">{conn.label}</p>
+                          <Badge
+                            variant={
+                              conn.environment === "live"
+                                ? "default"
+                                : "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {conn.environment === "live" ? "Live" : "Demo"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {conn.username}
+                        </p>
+                        {conn.accounts.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {conn.accounts.map((acc) => (
+                              <Badge
+                                key={acc.id}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {acc.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReconnect(conn)}
+                      >
+                        <RefreshCw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                        Reconnect
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openEditDialog(conn)}
+                        aria-label={`Edit ${conn.label}`}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveConnection(conn)}
+                        aria-label={`Remove ${conn.label}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Info Section */}
+        <div className="rounded-md border bg-muted/50 p-4 mt-6">
+          <div className="flex items-start gap-2">
+            <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+            <div className="space-y-1.5 text-sm text-muted-foreground">
+              <p>
+                Each prop firm provides separate Tradovate credentials. Add one
+                connection per prop firm to manage all accounts.
               </p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button
-              onClick={handleTradovateTestConnection}
-              disabled={tradovateConnecting || !tradovateUsername.trim() || !tradovatePassword.trim()}
-            >
-              {tradovateConnecting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
-              )}
-              {tradovateConnecting ? "Testing..." : "Test Connection"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleTradovateSaveCredentials}
-              disabled={tradovateSaving || !tradovateUsername.trim()}
-            >
-              {tradovateSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" aria-hidden="true" />
-              )}
-              Save Credentials
-            </Button>
-            {tradovateConnected && (
-              <Button
-                variant="destructive"
-                onClick={handleTradovateDisconnect}
-              >
-                <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                Disconnect
-              </Button>
-            )}
-          </div>
-
-          {/* Info Card */}
-          <div className="rounded-md border bg-muted/50 p-4 mt-4">
-            <div className="flex items-start gap-2">
-              <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>
-                  <strong>Multi-account access:</strong> Your Tradovate credentials give access to all accounts under your login, including prop firm accounts (Apex, TopStep, etc.).
-                </p>
-                <p>
-                  <strong>Free demo:</strong> Demo environment is completely free. Create an account at{" "}
-                  <a
-                    href="https://trader.tradovate.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline hover:no-underline"
-                  >
-                    trader.tradovate.com
-                  </a>
-                </p>
-                <p>
-                  <strong>Live environment:</strong> Requires a Tradovate subscription for market data ($0 for order execution only).
-                </p>
-                <p>
-                  <strong>Safe with prop firms:</strong> This uses the official Tradovate API, the same as any other connected platform (Sierra Chart, TradingView, etc.). Prop firms cannot distinguish API access from platform access.
-                </p>
-                <p>
-                  <strong>No API key needed:</strong> Just your Tradovate username and password. The appId is just a label used internally.
-                </p>
-              </div>
+              <p>
+                Demo environment is free — no subscription needed.
+              </p>
+              <p>
+                One connection discovers all accounts under that login.
+              </p>
             </div>
           </div>
         </div>
@@ -665,6 +660,94 @@ export default function SettingsPage() {
           </div>
         </div>
       </section>
+
+      {/* Add/Edit Connection Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingConnection ? "Edit Connection" : "Add Connection"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingConnection
+                ? "Update connection details and re-enter password to reconnect."
+                : "Connect a prop firm account by entering your Tradovate credentials."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="conn-label">
+                Label
+              </label>
+              <Input
+                id="conn-label"
+                value={dialogLabel}
+                onChange={(e) => setDialogLabel(e.target.value)}
+                placeholder="e.g., Apex Funded"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="conn-username">
+                Username
+              </label>
+              <Input
+                id="conn-username"
+                value={dialogUsername}
+                onChange={(e) => setDialogUsername(e.target.value)}
+                placeholder="Tradovate username"
+                autoComplete="username"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="conn-password">
+                Password
+              </label>
+              <Input
+                id="conn-password"
+                type="password"
+                value={dialogPassword}
+                onChange={(e) => setDialogPassword(e.target.value)}
+                placeholder="Tradovate password"
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Environment</label>
+              <Select
+                value={dialogEnvironment}
+                onValueChange={(val) =>
+                  setDialogEnvironment(val as "demo" | "live")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="demo">Demo</SelectItem>
+                  <SelectItem value="live">Live</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {dialogError && (
+              <p className="text-sm text-destructive">{dialogError}</p>
+            )}
+
+            <Button
+              className="w-full"
+              onClick={handleTestAndConnect}
+              disabled={dialogConnecting}
+            >
+              {dialogConnecting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+              )}
+              {dialogConnecting ? "Connecting..." : "Test & Connect"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

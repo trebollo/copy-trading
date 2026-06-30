@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 const TRADOVATE_DEMO_URL = "https://demo.tradovateapi.com/v1";
+const TRADOVATE_LIVE_URL = "https://live.tradovateapi.com/v1";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { username, password } = body;
+    const { username, password, environment } = body;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -26,9 +27,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const env = environment === "live" ? "live" : "demo";
+    const baseUrl = env === "live" ? TRADOVATE_LIVE_URL : TRADOVATE_DEMO_URL;
+
     // Proxy the authentication request to Tradovate server-side (avoids CORS)
     const tradovateResponse = await fetch(
-      `${TRADOVATE_DEMO_URL}/auth/accessTokenRequest`,
+      `${baseUrl}/auth/accessTokenRequest`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,14 +45,7 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    if (tradovateResponse.ok) {
-      const data = await tradovateResponse.json();
-      return NextResponse.json({
-        success: true,
-        userId: data.userId,
-        expirationTime: data.expirationTime,
-      });
-    } else {
+    if (!tradovateResponse.ok) {
       const errorText = await tradovateResponse.text();
       return NextResponse.json(
         {
@@ -58,6 +55,41 @@ export async function POST(request: NextRequest) {
         { status: tradovateResponse.status }
       );
     }
+
+    const data = await tradovateResponse.json();
+    const accessToken = data.accessToken;
+
+    // Fetch account list with the token
+    let accounts: { id: string; name: string }[] = [];
+    try {
+      const accountsResponse = await fetch(`${baseUrl}/account/list`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (accountsResponse.ok) {
+        const accountsData = await accountsResponse.json();
+        accounts = (accountsData || []).map(
+          (acc: { id: number; name: string }) => ({
+            id: String(acc.id),
+            name: acc.name,
+          })
+        );
+      }
+    } catch {
+      // If account fetch fails, still return success with empty accounts
+    }
+
+    return NextResponse.json({
+      success: true,
+      accessToken,
+      userId: data.userId,
+      expirationTime: data.expirationTime,
+      accounts,
+    });
   } catch (error) {
     console.error("Tradovate connection error:", error);
     return NextResponse.json(
