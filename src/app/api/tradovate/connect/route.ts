@@ -66,21 +66,22 @@ export async function POST(request: NextRequest) {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
         },
       });
 
       if (accountsResponse.ok) {
         const accountsData = await accountsResponse.json();
         accounts = (accountsData || []).map(
-          (acc: { id: number; name: string }) => ({
+          (acc: { id: number; name?: string; nickname?: string }) => ({
             id: String(acc.id),
-            name: acc.name,
+            name: acc.nickname || acc.name || `Account ${acc.id}`,
           })
         );
+      } else {
+        console.error("Failed to fetch accounts:", accountsResponse.status, await accountsResponse.text());
       }
-    } catch {
-      // If account fetch fails, still return success with empty accounts
+    } catch (err) {
+      console.error("Error fetching account list:", err);
     }
 
     return NextResponse.json({

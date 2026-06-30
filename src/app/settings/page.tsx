@@ -284,6 +284,19 @@ export default function SettingsPage() {
     openEditDialog(conn);
   };
 
+  const handleRefreshAccounts = (conn: TradovateConnection) => {
+    // Open edit dialog in refresh mode — user re-enters password, clicks "Test & Connect"
+    // which already fetches and updates accounts
+    setEditingConnection(conn);
+    setDialogLabel(conn.label);
+    setDialogUsername(conn.username);
+    setDialogPassword("");
+    setDialogEnvironment(conn.environment);
+    setDialogError("");
+    setDialogOpen(true);
+    toast.info("Enter your password and click \"Test & Connect\" to refresh accounts.");
+  };
+
   const handleRemoveConnection = (conn: TradovateConnection) => {
     removeConnection(conn.id);
     loadConnections();
@@ -493,6 +506,15 @@ export default function SettingsPage() {
                       >
                         <RefreshCw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                         Reconnect
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRefreshAccounts(conn)}
+                        aria-label={`Refresh accounts for ${conn.label}`}
+                        title="Refresh accounts (re-enter password)"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
