@@ -244,6 +244,13 @@ export default function SettingsPage() {
 
       const data = await response.json();
       const accounts = data.accounts || [];
+
+      // Show debug info if no accounts found
+      if (accounts.length === 0 && data.debug && data.debug.length > 0) {
+        console.log("Tradovate debug:", data.debug);
+        toast.info(`Connected but no accounts found. Debug: ${data.debug.join(", ")}`);
+      }
+
       const now = new Date().toISOString();
 
       if (editingConnection) {
@@ -483,7 +490,7 @@ export default function SettingsPage() {
                         <p className="text-sm text-muted-foreground">
                           {conn.username}
                         </p>
-                        {conn.accounts.length > 0 && (
+                        {conn.accounts.length > 0 ? (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {conn.accounts.map((acc) => (
                               <Badge
@@ -495,7 +502,11 @@ export default function SettingsPage() {
                               </Badge>
                             ))}
                           </div>
-                        )}
+                        ) : conn.status === "connected" ? (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            No accounts detected — try Refresh
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
