@@ -57,57 +57,121 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await tradovateResponse.json();
-    const accessToken = data.accessToken;
 
     // Fetch account list - try multiple approaches
     let accounts: { id: string; name: string }[] = [];
     const debugInfo: string[] = [];
 
-    // Approach 1: /account/list
-    try {
-      const accountsResponse = await fetch(`${baseUrl}/account/list`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+    // Log auth response fields for debugging
+    const tokenFields = Object.keys(data);
+    debugInfo.push(`Auth response fields: ${tokenFields.join(", ")}`);
 
-      if (accountsResponse.ok) {
-        const accountsData = await accountsResponse.json();
-        debugInfo.push(`/account/list returned ${Array.isArray(accountsData) ? accountsData.length : 0} items`);
-
-        if (Array.isArray(accountsData) && accountsData.length > 0) {
-          accounts = accountsData.map((acc: Record<string, unknown>) => ({
-            id: String(acc.id ?? acc.accountId ?? ""),
-            name: String(acc.nickname || acc.name || acc.displayName || `Account ${acc.id}`),
-          }));
-        }
-      } else {
-        debugInfo.push(`/account/list failed: ${accountsResponse.status}`);
-      }
-    } catch (err) {
-      debugInfo.push(`/account/list error: ${String(err)}`);
+    // Try different token fields
+    const token = data.accessToken || data["p-ticket"] || data.token;
+    if (!token) {
+      debugInfo.push(`No token found in auth response. Available: ${JSON.stringify(data).substring(0, 200)}`);
+    } else {
+      debugInfo.push(`Token obtained (${String(token).substring(0, 10)}...)`);
     }
 
-    // Approach 2: If no accounts found, try /tradingPermission/list
-    if (accounts.length === 0) {
+    // Approach 1: Try GET /account/list first, then POST if GET fails
+    if (token) {
       try {
-        const permResponse = await fetch(`${baseUrl}/tradingPermission/list`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+        // Try GET first
+        let accountsResponse = await fetch(`${baseUrl}/account/list`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         });
+
+        // If GET returns 401 or 405, try POST (Tradovate accepts both for some endpoints)
+        if (!accountsResponse.ok && (accountsResponse.status === 401 || accountsResponse.status === 405)) {
+          debugInfo.push(`GET /account/list returned ${accountsResponse.status}, trying POST...`);
+          accountsResponse = await fetch(`${baseUrl}/account/list`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: "{}",
+          });
+        }
+
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json();
+          debugInfo.push(`/account/list returned ${Array.isArray(accountsData) ? accountsData.length : 0} items`);
+
+          if (Array.isArray(accountsData) && accountsData.length > 0) {
+            accounts = accountsData.map((acc: Record<string, unknown>) => ({
+              id: String(acc.id ?? acc.accountId ?? ""),
+              name: String(acc.nickname || acc.name || acc.displayName || `Account ${acc.id}`),
+            }));
+          }
+        } else {
+          const errText = await accountsResponse.text();
+          debugInfo.push(`/account/list final status: ${accountsResponse.status} - ${errText.substring(0, 150)}`);
+        }
+      } catch (err) {
+        debugInfo.push(`/account/list error: ${String(err)}`);
+      }
+    }
+
+    // Approach 2: Try /tradingPermission/list
+    if (accounts.length === 0 && token) {
+      try {
+        // Try GET first
+        let permResponse = await fetch(`${baseUrl}/tradingPermission/list`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        // If GET returns 401 or 405, try POST
+        if (!permResponse.ok && (permResponse.status === 401 || permResponse.status === 405)) {
+          debugInfo.push(`GET /tradingPermission/list returned ${permResponse.status}, trying POST...`);
+          permResponse = await fetch(`${baseUrl}/tradingPermission/list`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: "{}",
+          });
+        }
 
         if (permResponse.ok) {
           const permData = await permResponse.json();
           debugInfo.push(`/tradingPermission/list returned ${Array.isArray(permData) ? permData.length : 0} items`);
 
           if (Array.isArray(permData) && permData.length > 0) {
-            // Trading permissions reference accountId
             const accountIds = Array.from(new Set(permData.map((p: Record<string, unknown>) => p.accountId)));
-            debugInfo.push(`Found account IDs from permissions: ${JSON.stringify(accountIds)}`);
+            debugInfo.push(`Permission account IDs: ${JSON.stringify(accountIds)}`);
 
-            // Try to fetch each account by ID
             for (const accId of accountIds) {
               try {
-                const accResponse = await fetch(`${baseUrl}/account/item?id=${accId}`, {
-                  headers: { Authorization: `Bearer ${accessToken}` },
+                let accResponse = await fetch(`${baseUrl}/account/item?id=${accId}`, {
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                  },
                 });
+
+                if (!accResponse.ok && (accResponse.status === 401 || accResponse.status === 405)) {
+                  accResponse = await fetch(`${baseUrl}/account/item`, {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ id: accId }),
+                  });
+                }
+
                 if (accResponse.ok) {
                   const accData = await accResponse.json();
                   accounts.push({
@@ -128,13 +192,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Approach 3: Try /user/syncRequest which returns comprehensive account data
-    if (accounts.length === 0) {
+    // Approach 3: /user/syncRequest
+    if (accounts.length === 0 && token) {
       try {
         const syncResponse = await fetch(`${baseUrl}/user/syncRequest`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ users: [data.userId] }),
@@ -142,7 +206,7 @@ export async function POST(request: NextRequest) {
 
         if (syncResponse.ok) {
           const syncData = await syncResponse.json();
-          debugInfo.push(`/user/syncRequest returned data`);
+          debugInfo.push(`/user/syncRequest returned keys: ${Object.keys(syncData).join(", ")}`);
 
           if (syncData.accounts && Array.isArray(syncData.accounts)) {
             accounts = syncData.accounts.map((acc: Record<string, unknown>) => ({
@@ -160,7 +224,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      accessToken,
+      accessToken: token,
       userId: data.userId,
       expirationTime: data.expirationTime,
       accounts,
