@@ -89,6 +89,8 @@ export default function SettingsPage() {
   const [dialogEnvironment, setDialogEnvironment] = useState<"demo" | "live">(
     "demo"
   );
+  const [dialogCid, setDialogCid] = useState("");
+  const [dialogSec, setDialogSec] = useState("");
   const [dialogConnecting, setDialogConnecting] = useState(false);
   const [dialogError, setDialogError] = useState("");
 
@@ -192,6 +194,8 @@ export default function SettingsPage() {
     setDialogLabel("");
     setDialogUsername("");
     setDialogPassword("");
+    setDialogCid("");
+    setDialogSec("");
     setDialogEnvironment("demo");
     setDialogError("");
     setDialogOpen(true);
@@ -202,6 +206,9 @@ export default function SettingsPage() {
     setDialogLabel(conn.label);
     setDialogUsername(conn.username);
     setDialogPassword("");
+    // CID and Secret are not stored (security), user re-enters them
+    setDialogCid("");
+    setDialogSec("");
     setDialogEnvironment(conn.environment);
     setDialogError("");
     setDialogOpen(true);
@@ -232,6 +239,8 @@ export default function SettingsPage() {
           username: dialogUsername.trim(),
           password: dialogPassword.trim(),
           environment: dialogEnvironment,
+          cid: dialogCid.trim() || undefined,
+          sec: dialogSec.trim() || undefined,
         }),
       });
 
@@ -303,6 +312,8 @@ export default function SettingsPage() {
     setDialogLabel(conn.label);
     setDialogUsername(conn.username);
     setDialogPassword("");
+    setDialogCid("");
+    setDialogSec("");
     setDialogEnvironment(conn.environment);
     setDialogError("");
     setDialogOpen(true);
@@ -577,6 +588,9 @@ export default function SettingsPage() {
                 connection per prop firm to manage all accounts.
               </p>
               <p>
+                Go to Tradovate → Settings → API Access → Create New Key to get your CID and Secret (free).
+              </p>
+              <p>
                 Demo environment is free — no subscription needed.
               </p>
               <p>
@@ -756,6 +770,32 @@ export default function SettingsPage() {
                 onChange={(e) => setDialogPassword(e.target.value)}
                 placeholder="Tradovate password"
                 autoComplete="current-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="conn-cid">
+                API Key (CID)
+              </label>
+              <Input
+                id="conn-cid"
+                value={dialogCid}
+                onChange={(e) => setDialogCid(e.target.value)}
+                placeholder="e.g., 14111"
+              />
+              <p className="text-xs text-muted-foreground">
+                Found in Tradovate → Settings → API Access
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="conn-sec">
+                API Secret
+              </label>
+              <Input
+                id="conn-sec"
+                type="password"
+                value={dialogSec}
+                onChange={(e) => setDialogSec(e.target.value)}
+                placeholder="xxx-xxx-xxx-xxx-xxx"
               />
             </div>
             <div className="space-y-2">

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { username, password, environment } = body;
+    const { username, password, environment, cid, sec } = body;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -30,6 +30,9 @@ export async function POST(request: NextRequest) {
     const env = environment === "live" ? "live" : "demo";
     const baseUrl = env === "live" ? TRADOVATE_LIVE_URL : TRADOVATE_DEMO_URL;
 
+    // Generate a stable device ID for this app instance
+    const deviceId = `copytrader-${Buffer.from(username).toString('base64').substring(0, 12)}`;
+
     // Proxy the authentication request to Tradovate server-side (avoids CORS)
     const tradovateResponse = await fetch(
       `${baseUrl}/auth/accessTokenRequest`,
@@ -39,8 +42,10 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           name: username,
           password: password,
-          appId: "CopyTrading",
+          appId: "CopyTrader",
           appVersion: "1.0",
+          ...(cid && sec ? { cid: Number(cid), sec } : {}),
+          deviceId,
         }),
       }
     );
