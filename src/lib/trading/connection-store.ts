@@ -6,6 +6,7 @@ export interface TradovateConnection {
   status: "connected" | "disconnected" | "error";
   lastSync: string | null;
   accounts: { id: string; name: string }[];
+  debug?: string[];
 }
 
 const STORAGE_KEY = "tradovate-connections";

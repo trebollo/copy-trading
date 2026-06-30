@@ -244,13 +244,7 @@ export default function SettingsPage() {
 
       const data = await response.json();
       const accounts = data.accounts || [];
-
-      // Show debug info if no accounts found
-      if (accounts.length === 0 && data.debug && data.debug.length > 0) {
-        console.log("Tradovate debug:", data.debug);
-        toast.info(`Connected but no accounts found. Debug: ${data.debug.join(", ")}`);
-      }
-
+      const debugMessages = data.debug || [];
       const now = new Date().toISOString();
 
       if (editingConnection) {
@@ -261,8 +255,8 @@ export default function SettingsPage() {
           status: "connected",
           lastSync: now,
           accounts,
+          debug: debugMessages,
         });
-        toast.success(`"${dialogLabel.trim()}" updated and connected`);
       } else {
         addConnection({
           label: dialogLabel.trim(),
@@ -271,12 +265,23 @@ export default function SettingsPage() {
           status: "connected",
           lastSync: now,
           accounts,
+          debug: debugMessages,
         });
-        toast.success(`"${dialogLabel.trim()}" added and connected`);
       }
 
       loadConnections();
       setDialogOpen(false);
+
+      // Show a single informative toast
+      if (accounts.length > 0) {
+        toast.success(`"${dialogLabel.trim()}" connected — ${accounts.length} account${accounts.length > 1 ? "s" : ""} found`);
+      } else {
+        // Show debug info prominently when no accounts found
+        toast.warning(
+          `"${dialogLabel.trim()}" connected but no accounts detected.\n${debugMessages.join("\n")}`,
+          { duration: 10000 }
+        );
+      }
     } catch {
       setDialogError(
         "Unable to reach Tradovate. Please check your network and try again."
@@ -503,9 +508,18 @@ export default function SettingsPage() {
                             ))}
                           </div>
                         ) : conn.status === "connected" ? (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            No accounts detected — try Refresh
-                          </p>
+                          <div className="mt-1">
+                            <p className="text-xs text-amber-600 dark:text-amber-400">
+                              No accounts detected — try Refresh
+                            </p>
+                            {conn.debug && conn.debug.length > 0 && (
+                              <div className="mt-1 text-[10px] text-muted-foreground font-mono">
+                                {conn.debug.map((msg, i) => (
+                                  <p key={i}>{msg}</p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         ) : null}
                       </div>
                     </div>
